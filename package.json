@@ -4,7 +4,8 @@
         "type": "git",
         "url": "git+https://github.com/andrewisen-tikab/three-multi-select"
     },
-    "version": "0.0.0",
+    "version": "0.0.1",
+    "private": true,
     "type": "module",
     "module": "src/index.ts",
     "main": "dist/three-multi-select.umd.cjs",

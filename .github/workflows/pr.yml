@@ -1,0 +1,20 @@
+name: PR Checker
+on:
+    pull_request:
+        branches:
+            - 'dev'
+    workflow_dispatch:
+jobs:
+    typescript:
+        name: 🔨 TypeScript Checker
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: ⤵️ Checkout "dev"
+              uses: actions/checkout@v3
+            - name: 🛠️ Install Dependencies
+              run: |
+                  yarn install
+            - name: ⏳ Checking TypeScript...
+              run: |
+                  yarn ts

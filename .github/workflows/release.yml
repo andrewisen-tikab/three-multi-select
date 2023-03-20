@@ -41,3 +41,10 @@ jobs:
               uses: hmarr/auto-approve-action@v3
               with:
                   pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+            - name: 🛠️ Publish
+              run: |
+                  yarn install
+                  yarn build
+                  npm publish
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

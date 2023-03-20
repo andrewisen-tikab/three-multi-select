@@ -1,8 +1,19 @@
 {
     "name": "three-multi-select",
-    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/andrewisen-tikab/three-multi-select"
+    },
     "version": "0.0.0",
     "type": "module",
+    "module": "src/index.ts",
+    "main": "dist/three-multi-select.umd.cjs",
+    "types:": "dist/three-multi-select.d.ts",
+    "author": "André Wisén",
+    "keywords": [
+        "three",
+        "threejs"
+    ],
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build && vite build -c vite.config.example.ts",
@@ -12,9 +23,10 @@
     "devDependencies": {
         "@types/three": "^0.149.0",
         "three": "^0.150.1",
-        "typescript": "^4.9.3",
         "three-mesh-bvh": "^0.5.23",
-        "vite": "^4.2.0"
+        "typescript": "^4.9.3",
+        "vite": "^4.2.0",
+        "vite-plugin-dts": "^2.1.0"
     },
     "peerDependencies": {
         "three": "^0.150.1",

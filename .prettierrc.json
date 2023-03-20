@@ -1,0 +1,13 @@
+{
+    "tabWidth": 4,
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": true,
+    "printWidth": 100,
+    "trailingComma": "all",
+    "importOrder": ["^(^three$)", "<THIRD_PARTY_MODULES>", "^[./]"],
+    "importOrderGroupNamespaceSpecifiers": true,
+    "importOrderSeparation": true,
+    "importOrderSortSpecifiers": true,
+    "endOfLine": "auto"
+}

@@ -18,7 +18,8 @@
         "dev": "vite",
         "build": "tsc && vite build && vite build -c vite.config.example.ts",
         "build:example": "tsc && vite build && vite build -c vite.config.example.ts",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "ts": "tsc"
     },
     "devDependencies": {
         "@types/three": "^0.149.0",

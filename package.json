@@ -7,8 +7,8 @@
     "version": "0.0.4",
     "type": "module",
     "module": "src/index.ts",
-    "main": "dist/three-multi-select.umd.cjs",
-    "types:": "dist/three-multi-select.d.ts",
+    "main": "dist/three-multi-select.js",
+    "types:": "dist/types.d.ts",
     "author": "André Wisén",
     "keywords": [
         "three",

@@ -10,14 +10,11 @@ export default defineConfig({
             name: 'three-multi-select',
             // the proper extensions will be added
             fileName: 'three-multi-select',
+            formats: ['es'],
         },
         rollupOptions: {
             external: ['three', 'three-mesh-bvh'],
         },
     },
-    plugins: [
-        dts({
-            insertTypesEntry: true,
-        }),
-    ],
+    plugins: [dts()],
 });

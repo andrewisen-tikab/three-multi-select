@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build && vite build -c vite.config.example.ts",
+        "build:example": "tsc && vite build && vite build -c vite.config.example.ts",
         "preview": "vite preview"
     },
     "devDependencies": {

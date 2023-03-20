@@ -1,0 +1,44 @@
+name: Release
+on:
+    release:
+        types: [published]
+    workflow_dispatch:
+jobs:
+    main:
+        name: 🎉 Release
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: ⤵️ Checkout
+              uses: actions/checkout@v3
+              with:
+                  ref: dev
+            - name: 🤖 Setup Bot
+              run: |
+                  git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git config --local user.name "github-actions[bot]"
+            - name: 🛠️ Build
+              run: |
+                  npm --no-git-tag-version version patch
+                  npm run version
+                  git add -A
+                  git commit -m "🤖 Update version" -a
+            - name: Create Pull Request
+              id: cpr
+              uses: peter-evans/create-pull-request@v5-beta
+              with:
+                  token: ${{ secrets.PAT }}
+                  title: Update version
+                  body: Automated changes by Bot 🤖
+                  commit-message: 🤖 Update version
+                  branch: bot/update-version
+            - name: Enable Pull Request Automerge
+              if: steps.cpr.outputs.pull-request-operation == 'created'
+              uses: peter-evans/enable-pull-request-automerge@v2
+              with:
+                  token: ${{ secrets.PAT }}
+                  pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+            - name: Auto Aprove
+              uses: hmarr/auto-approve-action@v3
+              with:
+                  pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}

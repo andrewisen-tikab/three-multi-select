@@ -48,3 +48,10 @@ jobs:
                   npm publish
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v1
+              with:
+                  path: './dist/example'
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v1

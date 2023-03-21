@@ -17,13 +17,17 @@ const geometry = new THREE.BoxGeometry(1, 1, 1);
 const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const selectMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 const cube1 = new THREE.Mesh(geometry, material);
-cube1.position.setX(-2);
+cube1.position.setX(-3);
 cube1.name = '1';
 scene.add(cube1);
 const cube2 = new THREE.Mesh(geometry, material);
 scene.add(cube2);
-cube2.position.setX(2);
+cube2.position.setX(0);
 cube2.name = '2';
+const cube3 = new THREE.Mesh(geometry, material);
+scene.add(cube3);
+cube2.position.setX(3);
+cube2.name = '3';
 
 camera.position.z = 5;
 
@@ -44,6 +48,8 @@ function animate() {
     cube1.rotation.y += 0.01;
     cube2.rotation.x += 0.01;
     cube2.rotation.y += 0.01;
+    cube3.rotation.x += 0.01;
+    cube3.rotation.y += 0.01;
 
     renderer.render(scene, camera);
 }

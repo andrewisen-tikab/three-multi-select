@@ -13,13 +13,21 @@ import {
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 
 import { EventDispatcher, Listener } from './EventDispatcher';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
 type Object = THREE.Object3D;
+type Parent = {
+    _parent: THREE.Object3D;
+};
+type Position = {
+    _position?: THREE.Vector3;
+};
 
 const _pointer = /* @__PURE__ */ new THREE.Vector2();
 let _intersects: THREE.Intersection<Object>[] = /* @__PURE__ */ [];
 const _raycaster = /* @__PURE__ */ new THREE.Raycaster();
 _raycaster.firstHitOnly = true;
+const _sum = /* @__PURE__ */ new THREE.Vector3();
 
 export default class MultiSelect extends EventDispatcher {
     private config: Config;
@@ -49,11 +57,14 @@ export default class MultiSelect extends EventDispatcher {
      */
     private domElement: HTMLElement;
     private object: Object[];
-    private selectedObjects: Object[];
+    private selectedObjects: THREE.Object3D;
 
     private onContextMenuEvent: (this: HTMLElement, event: MouseEvent) => void;
     private onPointerDownEvent: (event: PointerEvent) => void;
     private onPointerMoveEvent: (event: PointerEvent) => void;
+
+    private tranformControls: TransformControls | null;
+    scene: THREE.Scene;
 
     static install() {
         THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -71,7 +82,9 @@ export default class MultiSelect extends EventDispatcher {
         this.camera = camera;
         this.domElement = domElement;
         this.object = objects;
-        this.selectedObjects = [];
+        this.selectedObjects = new THREE.Object3D();
+        this.scene = new THREE.Scene();
+        this.scene.add(this.selectedObjects);
         this.config = { ...DefaultConfig, ...config };
         this.enabled = true;
 
@@ -90,6 +103,16 @@ export default class MultiSelect extends EventDispatcher {
         };
 
         this.state = 0;
+
+        // additional controls
+
+        this.tranformControls = this.config.useTransformControls
+            ? new TransformControls(camera, domElement)
+            : null;
+        if (this.tranformControls) {
+            this.scene.add(this.tranformControls);
+        }
+        // events
 
         this.onContextMenuEvent = this._onContextMenu.bind(this);
         this.onPointerDownEvent = this._onPointerDown.bind(this);
@@ -145,37 +168,81 @@ export default class MultiSelect extends EventDispatcher {
         this.updatePointer(event);
         _raycaster.setFromCamera(_pointer, this.camera);
         _intersects = [];
-        _raycaster.intersectObjects(this.object, this.config.recursive, _intersects);
+        _raycaster.intersectObjects(
+            [...this.object, ...this.selectedObjects.children],
+            this.config.recursive,
+            _intersects,
+        );
 
         if (_intersects[0] == null) return;
-        const { object } = _intersects[0];
-        let alreadySelected = false;
-        for (let i = 0; i < this.selectedObjects.length; i++) {
-            const element = this.selectedObjects[i];
-            if (object.uuid !== element.uuid) continue;
-            alreadySelected = true;
-            if (this.state === ACTION.TOGGLE) {
-                this.deselectObject(element, i);
-            } else if (this.state === ACTION.DESELECT) {
-                this.deselectObject(element, i);
+        const { object: intersectedObject } = _intersects[0];
+        const object = this.selectedObjects.getObjectById(intersectedObject.id);
+
+        if (object) {
+            if (this.state === ACTION.TOGGLE || this.state === ACTION.DESELECT) {
+                this.deselectObject(object);
             }
-            break;
+            return;
         }
-        if (alreadySelected) return;
         if (this.state === ACTION.DESELECT) return;
-        this.selectObject(object);
+        this.selectObject(intersectedObject);
     }
 
     selectObject<T extends THREE.Object3D>(object: T): void {
-        this.selectedObjects.push(object);
+        (object as T & Parent)._parent = object.parent as T;
+        this.selectedObjects.attach(object);
+        this.attachObjectToTransformControl();
         this.dispatchEvent({ type: 'select', object });
     }
 
-    deselectObject<T extends THREE.Object3D>(object: T, index: number): void {
-        // Fast way
-        this.selectedObjects[index] = this.selectedObjects[this.selectedObjects.length - 1];
-        this.selectedObjects.pop();
+    deselectObject<T extends THREE.Object3D>(object: T): void {
+        this.selectedObjects.remove(object);
+        (object as T & Parent)._parent.add(object);
+        this.detachObjectToTransformControl(object);
+
         this.dispatchEvent({ type: 'deselect', object });
+    }
+
+    private attachObjectToTransformControl() {
+        if (this.config.useTransformControls === false) return;
+        if (this.tranformControls === null) return;
+        if (this.selectedObjects.children.length === 0) return;
+        if (this.selectedObjects.children.length === 1) {
+            this.tranformControls.attach(this.selectedObjects.children[0]);
+        } else {
+            this.tranformControls.detach();
+
+            for (let i = 0; i < this.selectedObjects.children.length; i++) {
+                const object = this.selectedObjects.children[i];
+                if ((object as THREE.Object3D & Position)._position == null) {
+                    (object as THREE.Object3D & Position)._position = new THREE.Vector3();
+                }
+                object.position.add(this.selectedObjects.position);
+                (object as THREE.Object3D & Required<Position>)._position.copy(object.position);
+                _sum.add((object as THREE.Object3D & Required<Position>)._position);
+            }
+            const averagePoint = _sum.divideScalar(this.selectedObjects.children.length);
+            this.selectedObjects.position.copy(averagePoint);
+            for (let i = 0; i < this.selectedObjects.children.length; i++) {
+                this.selectedObjects.children[i].position.sub(averagePoint);
+            }
+            this.tranformControls.attach(this.selectedObjects);
+        }
+    }
+
+    private detachObjectToTransformControl(object: THREE.Object3D) {
+        if (this.config.useTransformControls === false) return;
+        if (this.tranformControls === null) return;
+        if (this.selectedObjects.children.length === 0) {
+            this.tranformControls.detach();
+        } else if (this.selectedObjects.children.length === 1) {
+            this.tranformControls.detach();
+            this.tranformControls.attach(this.selectedObjects.children[0]);
+        } else {
+            this.tranformControls.detach();
+            this.tranformControls.attach(this.selectedObjects);
+        }
+        object.position.add(this.selectedObjects.position);
     }
 
     private _onPointerMove(event: PointerEvent): void {
@@ -209,7 +276,7 @@ export default class MultiSelect extends EventDispatcher {
         this.domElement.removeEventListener('contextmenu', this.onContextMenuEvent);
         this.domElement.removeEventListener('pointerdown', this.onPointerDownEvent);
         this.domElement.removeEventListener('pointermove', this.onPointerMoveEvent);
-        this.selectedObjects = [];
+        this.selectedObjects.clear();
     }
 
     /**

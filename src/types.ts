@@ -1,12 +1,18 @@
+import type { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+
 export type Config = {
     /**
      *  If true, it also checks all descendants. Otherwise it only checks intersection with the object. Default is false.
      */
     recursive: boolean;
+    useTransformControls: boolean;
+    transformControls: TransformControls | null;
 };
 
 export const DefaultConfig: Config = Object.freeze({
     recursive: false,
+    useTransformControls: true,
+    transformControls: null,
 });
 
 // see https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons#value

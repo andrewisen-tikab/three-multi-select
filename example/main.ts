@@ -41,6 +41,8 @@ multiSelect.addEventListener<'deselect', Mesh>('deselect', (event) => {
     const { object } = event;
     object.material = object._material;
 });
+
+scene.add(multiSelect.scene);
 function animate() {
     requestAnimationFrame(animate);
 

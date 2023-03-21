@@ -1,12 +1,18 @@
+import type { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+
 export type Config = {
     /**
      *  If true, it also checks all descendants. Otherwise it only checks intersection with the object. Default is false.
      */
     recursive: boolean;
+    useTransformControls: boolean;
+    transformControls: TransformControls | null;
 };
 
 export const DefaultConfig: Config = Object.freeze({
     recursive: false,
+    useTransformControls: true,
+    transformControls: null,
 });
 
 // see https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons#value
@@ -33,7 +39,8 @@ export type MouseButtons = {
     right: mouseButtonAction;
     wheel: mouseWheelAction;
 };
-type mouseButtonAction =
+
+export type mouseButtonAction =
     | typeof ACTION.NONE
     | typeof ACTION.SELECT
     | typeof ACTION.MULTI_SELECT
@@ -48,16 +55,21 @@ export type Touches = {
     three: multiTouchAction;
 };
 
-type singleTouchAction =
+export type singleTouchAction =
     | typeof ACTION.NONE
     | typeof ACTION.SELECT
     | typeof ACTION.MULTI_SELECT
     | typeof ACTION.DESELECT
     | typeof ACTION.TOGGLE;
 
-type multiTouchAction =
+export type multiTouchAction =
     | typeof ACTION.NONE
     | typeof ACTION.SELECT
     | typeof ACTION.MULTI_SELECT
     | typeof ACTION.DESELECT
     | typeof ACTION.TOGGLE;
+
+export type MultiSelectEventMap = {
+    select: { type: 'select'; object: THREE.Object3D };
+    deselect: { type: 'deselect'; object: THREE.Object3D };
+};

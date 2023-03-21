@@ -6,37 +6,50 @@ import {
     DefaultConfig,
     MouseButtons,
     MOUSE_BUTTON,
+    MultiSelectEventMap,
     Touches,
 } from './types';
 
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 
-import { material } from './debug';
+import { EventDispatcher, Listener } from './EventDispatcher';
 
-type Mesh = THREE.Mesh<THREE.BufferGeometry, THREE.Material> & {
-    _material: THREE.Material;
-};
+type Object = THREE.Object3D;
 
 const _pointer = /* @__PURE__ */ new THREE.Vector2();
-let _intersects: THREE.Intersection<Mesh>[] = /* @__PURE__ */ [];
+let _intersects: THREE.Intersection<Object>[] = /* @__PURE__ */ [];
 const _raycaster = /* @__PURE__ */ new THREE.Raycaster();
 _raycaster.firstHitOnly = true;
 
-export default class MultiSelect extends THREE.EventDispatcher {
+export default class MultiSelect extends EventDispatcher {
     private config: Config;
 
+    /**
+     * When set to `false`, the controls will not respond to user input.
+     * @default true
+     */
     public enabled: boolean;
 
+    /**
+     * This object contains references to the mouse actions used by the controls.
+     */
     public mouseButtons: MouseButtons;
 
+    /**
+     * This object contains references to the touch actions used by the controls.
+     */
     public touches: Touches;
 
     private state: Action;
 
     private camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
+
+    /**
+     * The {@link HTMLElement} used to listen for mouse / touch events. This must be passed in the constructor; changing it here will not set up new event listeners.
+     */
     private domElement: HTMLElement;
-    private object: Mesh[];
-    private selectedObjects: Mesh[];
+    private object: Object[];
+    private selectedObjects: Object[];
 
     private onContextMenuEvent: (this: HTMLElement, event: MouseEvent) => void;
     private onPointerDownEvent: (event: PointerEvent) => void;
@@ -51,7 +64,7 @@ export default class MultiSelect extends THREE.EventDispatcher {
     constructor(
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
         domElement: HTMLElement,
-        objects: Mesh[],
+        objects: Object[],
         config?: Partial<Config>,
     ) {
         super();
@@ -84,12 +97,22 @@ export default class MultiSelect extends THREE.EventDispatcher {
         this.activate();
     }
 
-    private _onContextMenu(event: MouseEvent) {
+    addEventListener<
+        K extends keyof MultiSelectEventMap,
+        T extends MultiSelectEventMap[K]['object'],
+    >(
+        type: K,
+        listener: (event: Omit<MultiSelectEventMap[K], 'object'> & { object: T }) => any,
+    ): void {
+        super.addEventListener(type, listener as Listener);
+    }
+
+    private _onContextMenu(event: MouseEvent): void {
         if (this.mouseButtons.right === ACTION.NONE) return;
         event.preventDefault();
     }
 
-    private _onPointerDown(event: PointerEvent) {
+    private _onPointerDown(event: PointerEvent): void {
         if (this.enabled === false) return;
 
         // const mouseButton =
@@ -143,46 +166,63 @@ export default class MultiSelect extends THREE.EventDispatcher {
         this.selectObject(object);
     }
 
-    selectObject(object: Mesh) {
+    selectObject<T extends THREE.Object3D>(object: T): void {
         this.selectedObjects.push(object);
-        object._material = object.material;
-        object.material = material;
+        this.dispatchEvent({ type: 'select', object });
     }
 
-    deselectObject(object: Mesh, index: number) {
+    deselectObject<T extends THREE.Object3D>(object: T, index: number): void {
         // Fast way
         this.selectedObjects[index] = this.selectedObjects[this.selectedObjects.length - 1];
         this.selectedObjects.pop();
-        object.material = object._material;
+        this.dispatchEvent({ type: 'deselect', object });
     }
 
-    private _onPointerMove(event: PointerEvent) {
+    private _onPointerMove(event: PointerEvent): void {
         if (this.enabled === false) return;
         this.updateRaycaster(event);
     }
 
-    private updateRaycaster(event: PointerEvent) {
+    private updateRaycaster(event: PointerEvent): void {
         this.updatePointer(event);
     }
 
-    private updatePointer(event: PointerEvent) {
+    private updatePointer(event: PointerEvent): void {
         const rect = this.domElement.getBoundingClientRect();
         _pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         _pointer.y = (-(event.clientY - rect.top) / rect.height) * 2 + 1;
     }
 
-    public activate() {
+    /**
+     * Adds the event listeners of the controls.
+     */
+    public activate(): void {
         this.domElement.addEventListener('contextmenu', this.onContextMenuEvent);
         this.domElement.addEventListener('pointerdown', this.onPointerDownEvent);
         this.domElement.addEventListener('pointermove', this.onPointerMoveEvent);
     }
 
-    public deactivate() {
+    /**
+     * Removes the event listeners of the controls.
+     */
+    public deactivate(): void {
         this.domElement.removeEventListener('contextmenu', this.onContextMenuEvent);
         this.domElement.removeEventListener('pointerdown', this.onPointerDownEvent);
         this.domElement.removeEventListener('pointermove', this.onPointerMoveEvent);
         this.selectedObjects = [];
     }
 
-    public dispose() {}
+    /**
+     * Should be called if the controls is no longer required.
+     */
+    public dispose(): void {
+        this.deactivate();
+    }
+
+    /**
+     * Returns the internal Raycaster instance that is used for intersection tests.
+     */
+    public getRaycaster(): THREE.Raycaster {
+        return _raycaster;
+    }
 }

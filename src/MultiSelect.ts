@@ -27,7 +27,10 @@ const _pointer = /* @__PURE__ */ new THREE.Vector2();
 let _intersects: THREE.Intersection<Object>[] = /* @__PURE__ */ [];
 const _raycaster = /* @__PURE__ */ new THREE.Raycaster();
 _raycaster.firstHitOnly = true;
+const _worldPosition = /* @__PURE__ */ new THREE.Vector3();
 const _sum = /* @__PURE__ */ new THREE.Vector3();
+
+// const average = (arr: number) => arr.reduce((p, c) => p + c, 0) / arr.length;
 
 export default class MultiSelect extends EventDispatcher {
     private config: Config;
@@ -199,7 +202,6 @@ export default class MultiSelect extends EventDispatcher {
         this.selectedObjects.remove(object);
         (object as T & Parent)._parent.add(object);
         this.detachObjectToTransformControl(object);
-
         this.dispatchEvent({ type: 'deselect', object });
     }
 
@@ -207,42 +209,47 @@ export default class MultiSelect extends EventDispatcher {
         if (this.config.useTransformControls === false) return;
         if (this.tranformControls === null) return;
         if (this.selectedObjects.children.length === 0) return;
-        if (this.selectedObjects.children.length === 1) {
-            this.tranformControls.attach(this.selectedObjects.children[0]);
-        } else {
-            this.tranformControls.detach();
-
-            for (let i = 0; i < this.selectedObjects.children.length; i++) {
-                const object = this.selectedObjects.children[i];
-                if ((object as THREE.Object3D & Position)._position == null) {
-                    (object as THREE.Object3D & Position)._position = new THREE.Vector3();
-                }
-                object.position.add(this.selectedObjects.position);
-                (object as THREE.Object3D & Required<Position>)._position.copy(object.position);
-                _sum.add((object as THREE.Object3D & Required<Position>)._position);
-            }
-            const averagePoint = _sum.divideScalar(this.selectedObjects.children.length);
-            this.selectedObjects.position.copy(averagePoint);
-            for (let i = 0; i < this.selectedObjects.children.length; i++) {
-                this.selectedObjects.children[i].position.sub(averagePoint);
-            }
-            this.tranformControls.attach(this.selectedObjects);
-        }
+        // Detach and re-compute the center.
+        this.tranformControls.detach();
+        this.handleTransformControlsCenter();
+        this.tranformControls.attach(this.selectedObjects);
     }
 
     private detachObjectToTransformControl(object: THREE.Object3D) {
         if (this.config.useTransformControls === false) return;
         if (this.tranformControls === null) return;
-        if (this.selectedObjects.children.length === 0) {
-            this.tranformControls.detach();
-        } else if (this.selectedObjects.children.length === 1) {
-            this.tranformControls.detach();
-            this.tranformControls.attach(this.selectedObjects.children[0]);
-        } else {
-            this.tranformControls.detach();
-            this.tranformControls.attach(this.selectedObjects);
-        }
+        // Detach and re-compute the center, if necessary
+        this.tranformControls.detach();
+        if (this.selectedObjects.children.length === 0) return;
         object.position.add(this.selectedObjects.position);
+        this.handleTransformControlsCenter();
+        this.tranformControls.attach(this.selectedObjects);
+    }
+
+    handleTransformControlsCenter() {
+        // Reset sum
+        _sum.set(0, 0, 0);
+
+        // Iterate all selected objects, find it's world position.
+        for (let i = 0; i < this.selectedObjects.children.length; i++) {
+            const object = this.selectedObjects.children[i];
+            object.getWorldPosition(_worldPosition);
+            // Find the new average
+            _sum.add(_worldPosition);
+        }
+        // This is the center for the tranform controls.
+        const averagePoint = _sum.divideScalar(this.selectedObjects.children.length);
+        // Offset all objects with the new center
+        for (let i = 0; i < this.selectedObjects.children.length; i++) {
+            const object = this.selectedObjects.children[i];
+            object.position
+                // Remove the previous center
+                .add(this.selectedObjects.position)
+                // Add the new center
+                .sub(averagePoint);
+        }
+        // Set the new center
+        this.selectedObjects.position.copy(averagePoint);
     }
 
     private _onPointerMove(event: PointerEvent): void {

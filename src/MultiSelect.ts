@@ -16,9 +16,7 @@ import { EventDispatcher, Listener } from './EventDispatcher';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
 type Object = THREE.Object3D;
-type Parent = {
-    _parent: THREE.Object3D;
-};
+
 type Position = {
     _position?: THREE.Vector3;
 };

@@ -29,6 +29,7 @@ const _raycaster = /* @__PURE__ */ new THREE.Raycaster();
 _raycaster.firstHitOnly = true;
 const _worldPosition = /* @__PURE__ */ new THREE.Vector3();
 const _sum = /* @__PURE__ */ new THREE.Vector3();
+const _averagePoint = /* @__PURE__ */ new THREE.Vector3();
 
 // const average = (arr: number) => arr.reduce((p, c) => p + c, 0) / arr.length;
 
@@ -60,7 +61,9 @@ export default class MultiSelect extends EventDispatcher {
      */
     private domElement: HTMLElement;
     private object: Object[];
-    private selectedObjects: THREE.Object3D;
+    private proxy: THREE.Object3D;
+
+    private selectedObjects: THREE.Object3D[];
 
     private onContextMenuEvent: (this: HTMLElement, event: MouseEvent) => void;
     private onPointerDownEvent: (event: PointerEvent) => void;
@@ -85,9 +88,10 @@ export default class MultiSelect extends EventDispatcher {
         this.camera = camera;
         this.domElement = domElement;
         this.object = objects;
-        this.selectedObjects = new THREE.Object3D();
+        this.proxy = new THREE.Object3D();
+        this.selectedObjects = [];
         this.scene = new THREE.Scene();
-        this.scene.add(this.selectedObjects);
+        this.scene.add(this.proxy);
         this.config = { ...DefaultConfig, ...config };
         this.enabled = true;
 
@@ -114,6 +118,16 @@ export default class MultiSelect extends EventDispatcher {
             : null;
         if (this.tranformControls) {
             this.scene.add(this.tranformControls);
+
+            // Manually transform each object
+            this.tranformControls.addEventListener('objectChange', (event) => {
+                const offset = event.target._offset as THREE.Vector3;
+                const positionStart = event.target._positionStart as THREE.Vector3;
+                for (let i = 0; i < this.selectedObjects.length; i++) {
+                    const element = this.selectedObjects[i] as THREE.Object3D & Required<Position>;
+                    element.position.copy(offset).add(positionStart).add(element._position);
+                }
+            });
         }
         // events
 
@@ -172,18 +186,25 @@ export default class MultiSelect extends EventDispatcher {
         _raycaster.setFromCamera(_pointer, this.camera);
         _intersects = [];
         _raycaster.intersectObjects(
-            [...this.object, ...this.selectedObjects.children],
+            [...this.object, ...this.proxy.children],
             this.config.recursive,
             _intersects,
         );
 
         if (_intersects[0] == null) return;
         const { object: intersectedObject } = _intersects[0];
-        const object = this.selectedObjects.getObjectById(intersectedObject.id);
+        let alreadySelected = false;
 
-        if (object) {
+        for (let i = 0; i < this.selectedObjects.length; i++) {
+            const element = this.selectedObjects[i];
+            if (element.uuid !== intersectedObject.uuid) continue;
+            alreadySelected = true;
+            break;
+        }
+
+        if (alreadySelected) {
             if (this.state === ACTION.TOGGLE || this.state === ACTION.DESELECT) {
-                this.deselectObject(object);
+                this.deselectObject(intersectedObject);
             }
             return;
         }
@@ -192,15 +213,19 @@ export default class MultiSelect extends EventDispatcher {
     }
 
     selectObject<T extends THREE.Object3D>(object: T): void {
-        (object as T & Parent)._parent = object.parent as T;
-        this.selectedObjects.attach(object);
+        this.selectedObjects.push(object);
         this.attachObjectToTransformControl();
         this.dispatchEvent({ type: 'select', object });
     }
 
     deselectObject<T extends THREE.Object3D>(object: T): void {
-        this.selectedObjects.remove(object);
-        (object as T & Parent)._parent.add(object);
+        for (let i = 0; i < this.selectedObjects.length; i++) {
+            const element = this.selectedObjects[i];
+            if (element.uuid !== object.uuid) continue;
+            this.selectedObjects[i] = this.selectedObjects[i - 1];
+            this.selectedObjects.pop();
+            break;
+        }
         this.detachObjectToTransformControl(object);
         this.dispatchEvent({ type: 'deselect', object });
     }
@@ -208,22 +233,21 @@ export default class MultiSelect extends EventDispatcher {
     private attachObjectToTransformControl() {
         if (this.config.useTransformControls === false) return;
         if (this.tranformControls === null) return;
-        if (this.selectedObjects.children.length === 0) return;
+        if (this.selectedObjects.length === 0) return;
         // Detach and re-compute the center.
         this.tranformControls.detach();
         this.handleTransformControlsCenter();
-        this.tranformControls.attach(this.selectedObjects);
+        this.tranformControls.attach(this.proxy);
     }
 
-    private detachObjectToTransformControl(object: THREE.Object3D) {
+    private detachObjectToTransformControl(_object: THREE.Object3D) {
         if (this.config.useTransformControls === false) return;
         if (this.tranformControls === null) return;
         // Detach and re-compute the center, if necessary
         this.tranformControls.detach();
-        if (this.selectedObjects.children.length === 0) return;
-        object.position.add(this.selectedObjects.position);
+        if (this.selectedObjects.length === 0) return;
         this.handleTransformControlsCenter();
-        this.tranformControls.attach(this.selectedObjects);
+        this.tranformControls.attach(this.proxy);
     }
 
     handleTransformControlsCenter() {
@@ -231,25 +255,23 @@ export default class MultiSelect extends EventDispatcher {
         _sum.set(0, 0, 0);
 
         // Iterate all selected objects, find it's world position.
-        for (let i = 0; i < this.selectedObjects.children.length; i++) {
-            const object = this.selectedObjects.children[i];
+        for (let i = 0; i < this.selectedObjects.length; i++) {
+            const object = this.selectedObjects[i];
             object.getWorldPosition(_worldPosition);
+
             // Find the new average
             _sum.add(_worldPosition);
         }
         // This is the center for the tranform controls.
-        const averagePoint = _sum.divideScalar(this.selectedObjects.children.length);
+        _averagePoint.copy(_sum.divideScalar(this.selectedObjects.length));
+
         // Offset all objects with the new center
-        for (let i = 0; i < this.selectedObjects.children.length; i++) {
-            const object = this.selectedObjects.children[i];
-            object.position
-                // Remove the previous center
-                .add(this.selectedObjects.position)
-                // Add the new center
-                .sub(averagePoint);
+        for (let i = 0; i < this.selectedObjects.length; i++) {
+            const object = this.selectedObjects[i] as THREE.Object3D & Required<Position>;
+            object._position = object.position.clone().sub(_averagePoint);
         }
         // Set the new center
-        this.selectedObjects.position.copy(averagePoint);
+        this.proxy.position.copy(_averagePoint);
     }
 
     private _onPointerMove(event: PointerEvent): void {
@@ -283,7 +305,7 @@ export default class MultiSelect extends EventDispatcher {
         this.domElement.removeEventListener('contextmenu', this.onContextMenuEvent);
         this.domElement.removeEventListener('pointerdown', this.onPointerDownEvent);
         this.domElement.removeEventListener('pointermove', this.onPointerMoveEvent);
-        this.selectedObjects.clear();
+        this.proxy.clear();
     }
 
     /**

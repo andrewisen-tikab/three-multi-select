@@ -16,9 +16,7 @@ import { EventDispatcher, Listener } from './EventDispatcher';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
 type Object = THREE.Object3D;
-type Parent = {
-    _parent: THREE.Object3D;
-};
+
 type Position = {
     _position?: THREE.Vector3;
 };
@@ -128,6 +126,11 @@ export default class MultiSelect extends EventDispatcher {
                     element.position.copy(offset).add(positionStart).add(element._position);
                 }
             });
+            if (this.config.controls) {
+                this.tranformControls.addEventListener('dragging-changed', (event) => {
+                    this.config.controls!.enabled = !event.value;
+                });
+            }
         }
         // events
 
@@ -166,6 +169,7 @@ export default class MultiSelect extends EventDispatcher {
         //         : null;
 
         if (event.pointerType === 'touch') {
+            this.state = ACTION.TOGGLE;
         } else {
             this.state = 0;
 
@@ -191,7 +195,12 @@ export default class MultiSelect extends EventDispatcher {
             _intersects,
         );
 
-        if (_intersects[0] == null) return;
+        if (_intersects[0] == null) {
+            if (this.config.deselectOnRaycastMiss) {
+                this.deselectAllObjects();
+            }
+            return;
+        }
         const { object: intersectedObject } = _intersects[0];
         let alreadySelected = false;
 
@@ -226,8 +235,18 @@ export default class MultiSelect extends EventDispatcher {
             this.selectedObjects.pop();
             break;
         }
-        this.detachObjectToTransformControl(object);
+        this.detachObjectToTransformControl();
         this.dispatchEvent({ type: 'deselect', object });
+    }
+
+    deselectAllObjects(): void {
+        for (let i = 0; i < this.selectedObjects.length; i++) {
+            const object = this.selectedObjects[i];
+            this.dispatchEvent({ type: 'deselect', object });
+        }
+
+        this.selectedObjects = [];
+        this.detachObjectToTransformControl();
     }
 
     private attachObjectToTransformControl() {
@@ -240,7 +259,7 @@ export default class MultiSelect extends EventDispatcher {
         this.tranformControls.attach(this.proxy);
     }
 
-    private detachObjectToTransformControl(_object: THREE.Object3D) {
+    private detachObjectToTransformControl() {
         if (this.config.useTransformControls === false) return;
         if (this.tranformControls === null) return;
         // Detach and re-compute the center, if necessary

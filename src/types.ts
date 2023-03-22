@@ -1,5 +1,9 @@
 import type { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
+export type GenericControls = {
+    enabled: boolean;
+};
+
 export type Config = {
     /**
      *  If true, it also checks all descendants. Otherwise it only checks intersection with the object. Default is false.
@@ -7,12 +11,20 @@ export type Config = {
     recursive: boolean;
     useTransformControls: boolean;
     transformControls: TransformControls | null;
+    controls: GenericControls | null;
+    /**
+     * If true, any raycast miss will result in a deselect.
+     * Note that camera controls may interfere with this logic.
+     */
+    deselectOnRaycastMiss: boolean;
 };
 
 export const DefaultConfig: Config = Object.freeze({
     recursive: false,
     useTransformControls: true,
     transformControls: null,
+    controls: null,
+    deselectOnRaycastMiss: false,
 });
 
 // see https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons#value

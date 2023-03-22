@@ -196,7 +196,12 @@ export default class MultiSelect extends EventDispatcher {
             _intersects,
         );
 
-        if (_intersects[0] == null) return;
+        if (_intersects[0] == null) {
+            if (this.config.deselectOnRaycastMiss) {
+                this.deselectAllObjects();
+            }
+            return;
+        }
         const { object: intersectedObject } = _intersects[0];
         let alreadySelected = false;
 
@@ -231,8 +236,18 @@ export default class MultiSelect extends EventDispatcher {
             this.selectedObjects.pop();
             break;
         }
-        this.detachObjectToTransformControl(object);
+        this.detachObjectToTransformControl();
         this.dispatchEvent({ type: 'deselect', object });
+    }
+
+    deselectAllObjects(): void {
+        for (let i = 0; i < this.selectedObjects.length; i++) {
+            const object = this.selectedObjects[i];
+            this.dispatchEvent({ type: 'deselect', object });
+        }
+
+        this.selectedObjects = [];
+        this.detachObjectToTransformControl();
     }
 
     private attachObjectToTransformControl() {
@@ -245,7 +260,7 @@ export default class MultiSelect extends EventDispatcher {
         this.tranformControls.attach(this.proxy);
     }
 
-    private detachObjectToTransformControl(_object: THREE.Object3D) {
+    private detachObjectToTransformControl() {
         if (this.config.useTransformControls === false) return;
         if (this.tranformControls === null) return;
         // Detach and re-compute the center, if necessary

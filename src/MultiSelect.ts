@@ -171,6 +171,7 @@ export default class MultiSelect extends EventDispatcher {
         //         : null;
 
         if (event.pointerType === 'touch') {
+            this.state = ACTION.TOGGLE;
         } else {
             this.state = 0;
 

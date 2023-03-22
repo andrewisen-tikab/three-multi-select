@@ -128,6 +128,11 @@ export default class MultiSelect extends EventDispatcher {
                     element.position.copy(offset).add(positionStart).add(element._position);
                 }
             });
+            if (this.config.controls) {
+                this.tranformControls.addEventListener('dragging-changed', (event) => {
+                    this.config.controls!.enabled = !event.value;
+                });
+            }
         }
         // events
 

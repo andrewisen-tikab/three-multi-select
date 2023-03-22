@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './style.css';
 import MultiSelect from '../src/MultiSelect';
 
@@ -30,8 +31,11 @@ cube2.position.setX(3);
 cube2.name = '3';
 
 camera.position.z = 5;
+const controls = new OrbitControls(camera, renderer.domElement);
 
-const multiSelect = new MultiSelect(camera, renderer.domElement, scene.children as any);
+const multiSelect = new MultiSelect(camera, renderer.domElement, scene.children, {
+    controls,
+});
 multiSelect.addEventListener<'select', Mesh>('select', (event) => {
     const { object } = event;
     object._material = object.material;
@@ -52,6 +56,8 @@ function animate() {
     cube2.rotation.y += 0.01;
     cube3.rotation.x += 0.01;
     cube3.rotation.y += 0.01;
+
+    controls.update();
 
     renderer.render(scene, camera);
 }

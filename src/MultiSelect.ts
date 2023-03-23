@@ -7,6 +7,7 @@ import {
     MouseButtons,
     MOUSE_BUTTON,
     MultiSelectEventMap,
+    PointerInput,
     Touches,
 } from './types';
 
@@ -50,6 +51,8 @@ export default class MultiSelect extends EventDispatcher {
      */
     public touches: Touches;
 
+    private activePointers: PointerInput[] = [];
+
     private state: Action;
 
     private camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
@@ -65,6 +68,7 @@ export default class MultiSelect extends EventDispatcher {
 
     private onContextMenuEvent: (this: HTMLElement, event: MouseEvent) => void;
     private onPointerDownEvent: (event: PointerEvent) => void;
+    private onPointerUpEvent: (event: PointerEvent) => void;
     private onPointerMoveEvent: (event: PointerEvent) => void;
 
     private tranformControls: TransformControls | null;
@@ -102,8 +106,8 @@ export default class MultiSelect extends EventDispatcher {
         };
 
         this.touches = {
-            one: ACTION.SELECT,
-            two: ACTION.SELECT,
+            one: ACTION.TOGGLE,
+            two: ACTION.NONE,
             three: ACTION.NONE,
         };
 
@@ -136,6 +140,7 @@ export default class MultiSelect extends EventDispatcher {
 
         this.onContextMenuEvent = this._onContextMenu.bind(this);
         this.onPointerDownEvent = this._onPointerDown.bind(this);
+        this.onPointerUpEvent = this._onPointerUp.bind(this);
         this.onPointerMoveEvent = this._onPointerMove.bind(this);
         this.activate();
     }
@@ -155,21 +160,60 @@ export default class MultiSelect extends EventDispatcher {
         event.preventDefault();
     }
 
+    protected findPointerById(pointerId: number): PointerInput | undefined {
+        return this.activePointers.find((activePointer) => activePointer.pointerId === pointerId);
+    }
+
+    protected findPointerByMouseButton(mouseButton: MOUSE_BUTTON): PointerInput | undefined {
+        return this.activePointers.find(
+            (activePointer) => activePointer.mouseButton === mouseButton,
+        );
+    }
+
     private _onPointerDown(event: PointerEvent): void {
         if (this.enabled === false) return;
 
-        // const mouseButton =
+        const mouseButton =
+            event.pointerType !== 'mouse'
+                ? null
+                : (event.buttons & MOUSE_BUTTON.LEFT) === MOUSE_BUTTON.LEFT
+                ? MOUSE_BUTTON.LEFT
+                : (event.buttons & MOUSE_BUTTON.MIDDLE) === MOUSE_BUTTON.MIDDLE
+                ? MOUSE_BUTTON.MIDDLE
+                : (event.buttons & MOUSE_BUTTON.RIGHT) === MOUSE_BUTTON.RIGHT
+                ? MOUSE_BUTTON.RIGHT
+                : null;
 
-        //     (event.buttons & MOUSE_BUTTON.LEFT) === MOUSE_BUTTON.LEFT
-        //         ? MOUSE_BUTTON.LEFT
-        //         : (event.buttons & MOUSE_BUTTON.MIDDLE) === MOUSE_BUTTON.MIDDLE
-        //         ? MOUSE_BUTTON.MIDDLE
-        //         : (event.buttons & MOUSE_BUTTON.RIGHT) === MOUSE_BUTTON.RIGHT
-        //         ? MOUSE_BUTTON.RIGHT
-        //         : null;
+        if (mouseButton !== null) {
+            const zombiePointer = this.findPointerByMouseButton(mouseButton);
+            zombiePointer &&
+                this.activePointers.splice(this.activePointers.indexOf(zombiePointer), 1);
+        }
+
+        const pointer = {
+            pointerId: event.pointerId,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            deltaX: 0,
+            deltaY: 0,
+            mouseButton,
+        } as PointerInput;
+        this.activePointers.push(pointer);
 
         if (event.pointerType === 'touch') {
-            this.state = ACTION.TOGGLE;
+            switch (this.activePointers.length) {
+                case 1:
+                    this.state = this.touches.one;
+                    break;
+
+                case 2:
+                    this.state = this.touches.two;
+                    break;
+
+                case 3:
+                    this.state = this.touches.three;
+                    break;
+            }
         } else {
             this.state = 0;
 
@@ -183,7 +227,12 @@ export default class MultiSelect extends EventDispatcher {
                 this.state = this.state | this.mouseButtons.right;
             }
         }
+    }
 
+    private _onPointerUp(event: PointerEvent) {
+        const pointerId = event.pointerId;
+        const pointer = this.findPointerById(pointerId);
+        pointer && this.activePointers.splice(this.activePointers.indexOf(pointer), 1);
         if (!this.state) return;
 
         this.updatePointer(event);
@@ -220,7 +269,6 @@ export default class MultiSelect extends EventDispatcher {
         if (this.state === ACTION.DESELECT) return;
         this.selectObject(intersectedObject);
     }
-
     selectObject<T extends THREE.Object3D>(object: T): void {
         this.selectedObjects.push(object);
         this.attachObjectToTransformControl();
@@ -314,6 +362,7 @@ export default class MultiSelect extends EventDispatcher {
     public activate(): void {
         this.domElement.addEventListener('contextmenu', this.onContextMenuEvent);
         this.domElement.addEventListener('pointerdown', this.onPointerDownEvent);
+        this.domElement.addEventListener('pointerup', this.onPointerUpEvent);
         this.domElement.addEventListener('pointermove', this.onPointerMoveEvent);
     }
 
@@ -323,6 +372,7 @@ export default class MultiSelect extends EventDispatcher {
     public deactivate(): void {
         this.domElement.removeEventListener('contextmenu', this.onContextMenuEvent);
         this.domElement.removeEventListener('pointerdown', this.onPointerDownEvent);
+        this.domElement.removeEventListener('pointerup', this.onPointerUpEvent);
         this.domElement.removeEventListener('pointermove', this.onPointerMoveEvent);
         this.proxy.clear();
     }

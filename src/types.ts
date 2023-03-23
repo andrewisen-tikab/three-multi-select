@@ -85,3 +85,12 @@ export type MultiSelectEventMap = {
     select: { type: 'select'; object: THREE.Object3D };
     deselect: { type: 'deselect'; object: THREE.Object3D };
 };
+
+export interface PointerInput {
+    pointerId: number;
+    clientX: number;
+    clientY: number;
+    deltaX: number;
+    deltaY: number;
+    mouseButton: MOUSE_BUTTON | null;
+}

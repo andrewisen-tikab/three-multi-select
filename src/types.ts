@@ -17,7 +17,11 @@ export type Config = {
     recursive: boolean;
     useTransformControls: boolean;
     transformControls: TransformControls | null;
-    controls: GenericControls | null;
+    /**
+     * The controls to use for the camera.
+     * If `transformControls` are provided, this camera controls will be disabled during transform.
+     */
+    cameraControls: GenericControls | null;
     /**
      * If true, any raycast miss will result in a deselect.
      * Note that camera controls may interfere with this logic.
@@ -32,7 +36,7 @@ export const DefaultConfig: Config = Object.freeze({
     recursive: false,
     useTransformControls: true,
     transformControls: null,
-    controls: null,
+    cameraControls: null,
     deselectOnRaycastMiss: false,
 });
 

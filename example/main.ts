@@ -50,8 +50,9 @@ camera.position.z = 5;
 const controls = new OrbitControls(camera, renderer.domElement);
 
 const multiSelect = new MultiSelect(camera, renderer.domElement, group.children, {
-    controls,
+    cameraControls: controls,
 });
+
 multiSelect.addEventListener<'select', Mesh>('select', (event) => {
     const { object } = event;
     object._material = object.material;

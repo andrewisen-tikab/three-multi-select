@@ -31,8 +31,14 @@ const _sum = /* @__PURE__ */ new THREE.Vector3();
 const _averagePoint = /* @__PURE__ */ new THREE.Vector3();
 
 // const average = (arr: number) => arr.reduce((p, c) => p + c, 0) / arr.length;
-
+/**
+ * A class for selecting objects in a scene.
+ */
 export default class MultiSelect extends EventDispatcher {
+    /**
+     * The {@link Config} used by this instance.
+     * Will respect the defaults set in {@link DefaultConfig}.
+     */
     private config: Config;
 
     /**
@@ -51,19 +57,39 @@ export default class MultiSelect extends EventDispatcher {
      */
     public touches: Touches;
 
+    /**
+     * An array of pointers that are currently active on the canvas.
+     */
     private activePointers: PointerInput[] = [];
 
+    /**
+     * The current state of the control.
+     */
     private state: Action;
 
+    /**
+     * The {@link THREE.Camera} used to render the scene.
+     */
     private camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
 
     /**
      * The {@link HTMLElement} used to listen for mouse / touch events. This must be passed in the constructor; changing it here will not set up new event listeners.
      */
     private domElement: HTMLElement;
+
+    /**
+     * The objects that are currently selected.s
+     */
     private object: Object[];
+
+    /**
+     * A proxy object that is used by the transform controls.
+     */
     private proxy: THREE.Object3D;
 
+    /**
+     * The objects that are currently selected.
+     */
     private selectedObjects: THREE.Object3D[];
 
     private onContextMenuEvent: (this: HTMLElement, event: MouseEvent) => void;
@@ -71,15 +97,33 @@ export default class MultiSelect extends EventDispatcher {
     private onPointerUpEvent: (event: PointerEvent) => void;
     private onPointerMoveEvent: (event: PointerEvent) => void;
 
+    /**
+     * The {@link TransformControls} used to transform selected objects.
+     * This is only available if `useTransformControls` is set to `true` in the constructor.
+     */
     private transformControls: TransformControls | null;
-    scene: THREE.Scene;
 
+    /**
+     * The {@link THREE.Scene} used to render the transform controls.
+     */
+    public scene: THREE.Scene;
+
+    /**
+     * Installs the necessary functions to the prototype of the given classes.
+     */
     static install() {
         THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
         THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
         THREE.Mesh.prototype.raycast = acceleratedRaycast;
     }
 
+    /**
+     * Creates a new instance of the controls.
+     * @param camera
+     * @param domElement
+     * @param objects
+     * @param config
+     */
     constructor(
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
         domElement: HTMLElement,
@@ -145,6 +189,9 @@ export default class MultiSelect extends EventDispatcher {
         this.activate();
     }
 
+    /**
+     * Activates the controls.
+     */
     addEventListener<
         K extends keyof MultiSelectEventMap,
         T extends MultiSelectEventMap[K]['object'],
@@ -269,12 +316,21 @@ export default class MultiSelect extends EventDispatcher {
         if (this.state === ACTION.DESELECT) return;
         this.selectObject(intersectedObject);
     }
+
+    /**
+     * Selects an object and attaches it to the transform control.
+     * @param object
+     */
     selectObject<T extends THREE.Object3D>(object: T): void {
         this.selectedObjects.push(object);
         this.attachObjectToTransformControl();
         this.dispatchEvent({ type: 'select', object });
     }
 
+    /**
+     * De-selects an object and detaches it from the transform control.
+     * @param object
+     */
     deselectObject<T extends THREE.Object3D>(object: T): void {
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const element = this.selectedObjects[i];
@@ -287,6 +343,9 @@ export default class MultiSelect extends EventDispatcher {
         this.dispatchEvent({ type: 'deselect', object });
     }
 
+    /**
+     * De-selects all objects and detaches them from the transform control.
+     */
     deselectAllObjects(): void {
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const object = this.selectedObjects[i];
@@ -297,7 +356,10 @@ export default class MultiSelect extends EventDispatcher {
         this.detachObjectToTransformControl();
     }
 
-    private attachObjectToTransformControl() {
+    /**
+     * Attaches the proxy object to the transform control.
+     */
+    private attachObjectToTransformControl(): void {
         if (this.config.useTransformControls === false) return;
         if (this.transformControls === null) return;
         if (this.selectedObjects.length === 0) return;
@@ -307,7 +369,10 @@ export default class MultiSelect extends EventDispatcher {
         this.transformControls.attach(this.proxy);
     }
 
-    private detachObjectToTransformControl() {
+    /**
+     * Detaches the proxy object from the transform control.
+     */
+    private detachObjectToTransformControl(): void {
         if (this.config.useTransformControls === false) return;
         if (this.transformControls === null) return;
         // Detach and re-compute the center, if necessary
@@ -317,6 +382,9 @@ export default class MultiSelect extends EventDispatcher {
         this.transformControls.attach(this.proxy);
     }
 
+    /**
+     * Computes the center of all selected objects and offsets them accordingly.
+     */
     handleTransformControlsCenter() {
         // Reset sum
         _sum.set(0, 0, 0);

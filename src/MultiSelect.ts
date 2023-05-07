@@ -150,7 +150,7 @@ export default class MultiSelect extends EventDispatcher {
 
         // configs
         this.mouseButtons = {
-            left: ACTION.TOGGLE,
+            left: ACTION.SELECT,
             middle: ACTION.NONE,
             right: ACTION.DESELECT,
             wheel: ACTION.NONE,

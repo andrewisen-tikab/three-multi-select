@@ -16,4 +16,6 @@ const multiSelect = new MultiSelect(camera, renderer.domElement, scene.children)
 
 ## Demo
 
+See the `example` folder or visit the link for a live demo.
+
 [https://andrewisen-tikab.github.io/three-multi-select/](https://andrewisen-tikab.github.io/three-multi-select/)

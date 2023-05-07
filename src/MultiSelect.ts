@@ -186,9 +186,6 @@ export default class MultiSelect extends EventDispatcher {
                     this.config.cameraControls!.enabled = !event.value;
                 });
             }
-            this.transformControls.addEventListener('mouseDown', (event) => {
-                console.log('mouseDown');
-            });
         }
         // events
 
@@ -230,11 +227,9 @@ export default class MultiSelect extends EventDispatcher {
     private _onPointerDown(event: PointerEvent): void {
         if (this.enabled === false) return;
 
-        if (this.transformControls) {
-            if (this.transformControls.axis) {
-                this.ignorePointerEvent = true;
-                return;
-            }
+        if (this.transformControls && this.transformControls.axis) {
+            this.ignorePointerEvent = true;
+            return;
         }
 
         const mouseButton =

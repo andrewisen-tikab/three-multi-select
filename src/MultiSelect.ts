@@ -108,6 +108,12 @@ export default class MultiSelect extends EventDispatcher {
      */
     public scene: THREE.Scene;
 
+    /**s
+     * This variable can be set by a third party to prevent the pointer up event from being triggered.
+     * For example, the `TransformControl` has higher "access" and will set this to `true` when it is active.
+     */
+    private ignorePointerEvent: boolean;
+
     /**
      * Installs the necessary functions to the prototype of the given classes.
      */
@@ -140,10 +146,11 @@ export default class MultiSelect extends EventDispatcher {
         this.scene.add(this.proxy);
         this.config = { ...DefaultConfig, ...config };
         this.enabled = true;
+        this.ignorePointerEvent = false;
 
         // configs
         this.mouseButtons = {
-            left: ACTION.SELECT,
+            left: ACTION.TOGGLE,
             middle: ACTION.NONE,
             right: ACTION.DESELECT,
             wheel: ACTION.NONE,
@@ -174,11 +181,14 @@ export default class MultiSelect extends EventDispatcher {
                     element.position.copy(offset).add(positionStart).add(element._position);
                 }
             });
-            if (this.config.controls) {
+            if (this.config.cameraControls) {
                 this.transformControls.addEventListener('dragging-changed', (event) => {
-                    this.config.controls!.enabled = !event.value;
+                    this.config.cameraControls!.enabled = !event.value;
                 });
             }
+            this.transformControls.addEventListener('mouseDown', (event) => {
+                console.log('mouseDown');
+            });
         }
         // events
 
@@ -219,6 +229,13 @@ export default class MultiSelect extends EventDispatcher {
 
     private _onPointerDown(event: PointerEvent): void {
         if (this.enabled === false) return;
+
+        if (this.transformControls) {
+            if (this.transformControls.axis) {
+                this.ignorePointerEvent = true;
+                return;
+            }
+        }
 
         const mouseButton =
             event.pointerType !== 'mouse'
@@ -277,6 +294,11 @@ export default class MultiSelect extends EventDispatcher {
     }
 
     private _onPointerUp(event: PointerEvent) {
+        if (this.enabled === false) return;
+        if (this.ignorePointerEvent) {
+            this.ignorePointerEvent = false;
+            return;
+        }
         const pointerId = event.pointerId;
         const pointer = this.findPointerById(pointerId);
         pointer && this.activePointers.splice(this.activePointers.indexOf(pointer), 1);

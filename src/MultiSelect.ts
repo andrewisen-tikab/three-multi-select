@@ -78,7 +78,7 @@ export default class MultiSelect extends EventDispatcher {
     private domElement: HTMLElement;
 
     /**
-     * The objects that are currently selected.s
+     * Objects that can be selected.
      */
     private object: Object[];
 
@@ -224,14 +224,20 @@ export default class MultiSelect extends EventDispatcher {
         );
     }
 
+    /**
+     * Set the state of the controls.
+     * All actions are then handled by the `pointerUpEvent`.
+     * @param event {@link PointerEvent}
+     */
     private _onPointerDown(event: PointerEvent): void {
         if (this.enabled === false) return;
 
+        // If a transform controls is active, we ignore the pointer down event.
         if (this.transformControls && this.transformControls.axis) {
             this.ignorePointerEvent = true;
             return;
         }
-
+        // Figure out which action to trigger
         const mouseButton =
             event.pointerType !== 'mouse'
                 ? null
@@ -243,12 +249,14 @@ export default class MultiSelect extends EventDispatcher {
                 ? MOUSE_BUTTON.RIGHT
                 : null;
 
+        // Edge case for touch events
         if (mouseButton !== null) {
             const zombiePointer = this.findPointerByMouseButton(mouseButton);
             zombiePointer &&
                 this.activePointers.splice(this.activePointers.indexOf(zombiePointer), 1);
         }
 
+        // Add pointer to active pointers
         const pointer = {
             pointerId: event.pointerId,
             clientX: event.clientX,
@@ -257,8 +265,10 @@ export default class MultiSelect extends EventDispatcher {
             deltaY: 0,
             mouseButton,
         } as PointerInput;
+
         this.activePointers.push(pointer);
 
+        // Set the state of the controls
         if (event.pointerType === 'touch') {
             switch (this.activePointers.length) {
                 case 1:
@@ -288,19 +298,29 @@ export default class MultiSelect extends EventDispatcher {
         }
     }
 
+    /**
+     * Given a state, try to perform an action.
+     * @param event {@link PointerEvent}
+     */
     private _onPointerUp(event: PointerEvent) {
         if (this.enabled === false) return;
+        // Ignore pointer up events if a transform controls is active.
         if (this.ignorePointerEvent) {
             this.ignorePointerEvent = false;
             return;
         }
+
+        // Check if the pointer is active
         const pointerId = event.pointerId;
         const pointer = this.findPointerById(pointerId);
         pointer && this.activePointers.splice(this.activePointers.indexOf(pointer), 1);
         if (!this.state) return;
 
+        // Perform a raycast by first updating the pointer
         this.updatePointer(event);
+        // Then setting the raycaster
         _raycaster.setFromCamera(_pointer, this.camera);
+        // And finally intersecting the objects.
         _intersects = [];
         _raycaster.intersectObjects(
             [...this.object, ...this.proxy.children],
@@ -308,15 +328,18 @@ export default class MultiSelect extends EventDispatcher {
             _intersects,
         );
 
+        // Raycast miss
         if (_intersects[0] == null) {
             if (this.config.deselectOnRaycastMiss) {
                 this.deselectAllObjects();
             }
             return;
         }
+
+        // Raycast hit
         const { object: intersectedObject } = _intersects[0];
         let alreadySelected = false;
-
+        // Check if already selected.
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const element = this.selectedObjects[i];
             if (element.uuid !== intersectedObject.uuid) continue;
@@ -324,12 +347,14 @@ export default class MultiSelect extends EventDispatcher {
             break;
         }
 
+        // If already selected, we check if we need to deselect or toggle.
         if (alreadySelected) {
             if (this.state === ACTION.TOGGLE || this.state === ACTION.DESELECT) {
                 this.deselectObject(intersectedObject);
             }
             return;
         }
+        // Return If we got a deselect event, but nothing to deselect.
         if (this.state === ACTION.DESELECT) return;
         this.selectObject(intersectedObject);
     }

@@ -31,8 +31,14 @@ const _sum = /* @__PURE__ */ new THREE.Vector3();
 const _averagePoint = /* @__PURE__ */ new THREE.Vector3();
 
 // const average = (arr: number) => arr.reduce((p, c) => p + c, 0) / arr.length;
-
+/**
+ * A class for selecting objects in a scene.
+ */
 export default class MultiSelect extends EventDispatcher {
+    /**
+     * The {@link Config} used by this instance.
+     * Will respect the defaults set in {@link DefaultConfig}.
+     */
     private config: Config;
 
     /**
@@ -51,19 +57,39 @@ export default class MultiSelect extends EventDispatcher {
      */
     public touches: Touches;
 
+    /**
+     * An array of pointers that are currently active on the canvas.
+     */
     private activePointers: PointerInput[] = [];
 
+    /**
+     * The current state of the control.
+     */
     private state: Action;
 
+    /**
+     * The {@link THREE.Camera} used to render the scene.
+     */
     private camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
 
     /**
      * The {@link HTMLElement} used to listen for mouse / touch events. This must be passed in the constructor; changing it here will not set up new event listeners.
      */
     private domElement: HTMLElement;
+
+    /**
+     * Objects that can be selected.
+     */
     private object: Object[];
+
+    /**
+     * A proxy object that is used by the transform controls.
+     */
     private proxy: THREE.Object3D;
 
+    /**
+     * The objects that are currently selected.
+     */
     private selectedObjects: THREE.Object3D[];
 
     private onContextMenuEvent: (this: HTMLElement, event: MouseEvent) => void;
@@ -71,15 +97,39 @@ export default class MultiSelect extends EventDispatcher {
     private onPointerUpEvent: (event: PointerEvent) => void;
     private onPointerMoveEvent: (event: PointerEvent) => void;
 
-    private tranformControls: TransformControls | null;
-    scene: THREE.Scene;
+    /**
+     * The {@link TransformControls} used to transform selected objects.
+     * This is only available if `useTransformControls` is set to `true` in the constructor.
+     */
+    private transformControls: TransformControls | null;
 
+    /**
+     * The {@link THREE.Scene} used to render the transform controls.
+     */
+    public scene: THREE.Scene;
+
+    /**s
+     * This variable can be set by a third party to prevent the pointer up event from being triggered.
+     * For example, the `TransformControl` has higher "access" and will set this to `true` when it is active.
+     */
+    private ignorePointerEvent: boolean;
+
+    /**
+     * Installs the necessary functions to the prototype of the given classes.
+     */
     static install() {
         THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
         THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
         THREE.Mesh.prototype.raycast = acceleratedRaycast;
     }
 
+    /**
+     * Creates a new instance of the controls.
+     * @param camera
+     * @param domElement
+     * @param objects
+     * @param config
+     */
     constructor(
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
         domElement: HTMLElement,
@@ -96,6 +146,7 @@ export default class MultiSelect extends EventDispatcher {
         this.scene.add(this.proxy);
         this.config = { ...DefaultConfig, ...config };
         this.enabled = true;
+        this.ignorePointerEvent = false;
 
         // configs
         this.mouseButtons = {
@@ -115,14 +166,14 @@ export default class MultiSelect extends EventDispatcher {
 
         // additional controls
 
-        this.tranformControls = this.config.useTransformControls
+        this.transformControls = this.config.useTransformControls
             ? new TransformControls(camera, domElement)
             : null;
-        if (this.tranformControls) {
-            this.scene.add(this.tranformControls);
+        if (this.transformControls) {
+            this.scene.add(this.transformControls);
 
             // Manually transform each object
-            this.tranformControls.addEventListener('objectChange', (event) => {
+            this.transformControls.addEventListener('objectChange', (event) => {
                 const offset = event.target._offset as THREE.Vector3;
                 const positionStart = event.target._positionStart as THREE.Vector3;
                 for (let i = 0; i < this.selectedObjects.length; i++) {
@@ -130,9 +181,9 @@ export default class MultiSelect extends EventDispatcher {
                     element.position.copy(offset).add(positionStart).add(element._position);
                 }
             });
-            if (this.config.controls) {
-                this.tranformControls.addEventListener('dragging-changed', (event) => {
-                    this.config.controls!.enabled = !event.value;
+            if (this.config.cameraControls) {
+                this.transformControls.addEventListener('dragging-changed', (event) => {
+                    this.config.cameraControls!.enabled = !event.value;
                 });
             }
         }
@@ -145,6 +196,9 @@ export default class MultiSelect extends EventDispatcher {
         this.activate();
     }
 
+    /**
+     * Activates the controls.
+     */
     addEventListener<
         K extends keyof MultiSelectEventMap,
         T extends MultiSelectEventMap[K]['object'],
@@ -170,9 +224,20 @@ export default class MultiSelect extends EventDispatcher {
         );
     }
 
+    /**
+     * Set the state of the controls.
+     * All actions are then handled by the `pointerUpEvent`.
+     * @param event {@link PointerEvent}
+     */
     private _onPointerDown(event: PointerEvent): void {
         if (this.enabled === false) return;
 
+        // If a transform controls is active, we ignore the pointer down event.
+        if (this.transformControls && this.transformControls.axis) {
+            this.ignorePointerEvent = true;
+            return;
+        }
+        // Figure out which action to trigger
         const mouseButton =
             event.pointerType !== 'mouse'
                 ? null
@@ -184,12 +249,14 @@ export default class MultiSelect extends EventDispatcher {
                 ? MOUSE_BUTTON.RIGHT
                 : null;
 
+        // Edge case for touch events
         if (mouseButton !== null) {
             const zombiePointer = this.findPointerByMouseButton(mouseButton);
             zombiePointer &&
                 this.activePointers.splice(this.activePointers.indexOf(zombiePointer), 1);
         }
 
+        // Add pointer to active pointers
         const pointer = {
             pointerId: event.pointerId,
             clientX: event.clientX,
@@ -198,8 +265,10 @@ export default class MultiSelect extends EventDispatcher {
             deltaY: 0,
             mouseButton,
         } as PointerInput;
+
         this.activePointers.push(pointer);
 
+        // Set the state of the controls
         if (event.pointerType === 'touch') {
             switch (this.activePointers.length) {
                 case 1:
@@ -229,14 +298,29 @@ export default class MultiSelect extends EventDispatcher {
         }
     }
 
+    /**
+     * Given a state, try to perform an action.
+     * @param event {@link PointerEvent}
+     */
     private _onPointerUp(event: PointerEvent) {
+        if (this.enabled === false) return;
+        // Ignore pointer up events if a transform controls is active.
+        if (this.ignorePointerEvent) {
+            this.ignorePointerEvent = false;
+            return;
+        }
+
+        // Check if the pointer is active
         const pointerId = event.pointerId;
         const pointer = this.findPointerById(pointerId);
         pointer && this.activePointers.splice(this.activePointers.indexOf(pointer), 1);
         if (!this.state) return;
 
+        // Perform a raycast by first updating the pointer
         this.updatePointer(event);
+        // Then setting the raycaster
         _raycaster.setFromCamera(_pointer, this.camera);
+        // And finally intersecting the objects.
         _intersects = [];
         _raycaster.intersectObjects(
             [...this.object, ...this.proxy.children],
@@ -244,15 +328,18 @@ export default class MultiSelect extends EventDispatcher {
             _intersects,
         );
 
+        // Raycast miss
         if (_intersects[0] == null) {
             if (this.config.deselectOnRaycastMiss) {
                 this.deselectAllObjects();
             }
             return;
         }
+
+        // Raycast hit
         const { object: intersectedObject } = _intersects[0];
         let alreadySelected = false;
-
+        // Check if already selected.
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const element = this.selectedObjects[i];
             if (element.uuid !== intersectedObject.uuid) continue;
@@ -260,21 +347,32 @@ export default class MultiSelect extends EventDispatcher {
             break;
         }
 
+        // If already selected, we check if we need to deselect or toggle.
         if (alreadySelected) {
             if (this.state === ACTION.TOGGLE || this.state === ACTION.DESELECT) {
                 this.deselectObject(intersectedObject);
             }
             return;
         }
+        // Return If we got a deselect event, but nothing to deselect.
         if (this.state === ACTION.DESELECT) return;
         this.selectObject(intersectedObject);
     }
+
+    /**
+     * Selects an object and attaches it to the transform control.
+     * @param object
+     */
     selectObject<T extends THREE.Object3D>(object: T): void {
         this.selectedObjects.push(object);
         this.attachObjectToTransformControl();
         this.dispatchEvent({ type: 'select', object });
     }
 
+    /**
+     * De-selects an object and detaches it from the transform control.
+     * @param object
+     */
     deselectObject<T extends THREE.Object3D>(object: T): void {
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const element = this.selectedObjects[i];
@@ -287,6 +385,9 @@ export default class MultiSelect extends EventDispatcher {
         this.dispatchEvent({ type: 'deselect', object });
     }
 
+    /**
+     * De-selects all objects and detaches them from the transform control.
+     */
     deselectAllObjects(): void {
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const object = this.selectedObjects[i];
@@ -297,26 +398,35 @@ export default class MultiSelect extends EventDispatcher {
         this.detachObjectToTransformControl();
     }
 
-    private attachObjectToTransformControl() {
+    /**
+     * Attaches the proxy object to the transform control.
+     */
+    private attachObjectToTransformControl(): void {
         if (this.config.useTransformControls === false) return;
-        if (this.tranformControls === null) return;
+        if (this.transformControls === null) return;
         if (this.selectedObjects.length === 0) return;
         // Detach and re-compute the center.
-        this.tranformControls.detach();
+        this.transformControls.detach();
         this.handleTransformControlsCenter();
-        this.tranformControls.attach(this.proxy);
+        this.transformControls.attach(this.proxy);
     }
 
-    private detachObjectToTransformControl() {
+    /**
+     * Detaches the proxy object from the transform control.
+     */
+    private detachObjectToTransformControl(): void {
         if (this.config.useTransformControls === false) return;
-        if (this.tranformControls === null) return;
+        if (this.transformControls === null) return;
         // Detach and re-compute the center, if necessary
-        this.tranformControls.detach();
+        this.transformControls.detach();
         if (this.selectedObjects.length === 0) return;
         this.handleTransformControlsCenter();
-        this.tranformControls.attach(this.proxy);
+        this.transformControls.attach(this.proxy);
     }
 
+    /**
+     * Computes the center of all selected objects and offsets them accordingly.
+     */
     handleTransformControlsCenter() {
         // Reset sum
         _sum.set(0, 0, 0);

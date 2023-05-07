@@ -1,9 +1,15 @@
 import type { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
+/**
+ * The configuration object for the MultiSelect.
+ */
 export type GenericControls = {
     enabled: boolean;
 };
 
+/**
+ * The configuration object for the MultiSelect.
+ */
 export type Config = {
     /**
      *  If true, it also checks all descendants. Otherwise it only checks intersection with the object. Default is false.
@@ -11,7 +17,11 @@ export type Config = {
     recursive: boolean;
     useTransformControls: boolean;
     transformControls: TransformControls | null;
-    controls: GenericControls | null;
+    /**
+     * The controls to use for the camera.
+     * If `transformControls` are provided, this camera controls will be disabled during transform.
+     */
+    cameraControls: GenericControls | null;
     /**
      * If true, any raycast miss will result in a deselect.
      * Note that camera controls may interfere with this logic.
@@ -19,11 +29,14 @@ export type Config = {
     deselectOnRaycastMiss: boolean;
 };
 
+/**
+ * The default configuration object for the MultiSelect.
+ */
 export const DefaultConfig: Config = Object.freeze({
     recursive: false,
     useTransformControls: true,
     transformControls: null,
-    controls: null,
+    cameraControls: null,
     deselectOnRaycastMiss: false,
 });
 
@@ -33,7 +46,7 @@ export const MOUSE_BUTTON = {
     RIGHT: 2,
     MIDDLE: 4,
 } as const;
-export type MOUSE_BUTTON = typeof MOUSE_BUTTON[keyof typeof MOUSE_BUTTON];
+export type MOUSE_BUTTON = (typeof MOUSE_BUTTON)[keyof typeof MOUSE_BUTTON];
 
 export const ACTION = Object.freeze({
     NONE: 0,

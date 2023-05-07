@@ -71,7 +71,7 @@ export default class MultiSelect extends EventDispatcher {
     private onPointerUpEvent: (event: PointerEvent) => void;
     private onPointerMoveEvent: (event: PointerEvent) => void;
 
-    private tranformControls: TransformControls | null;
+    private transformControls: TransformControls | null;
     scene: THREE.Scene;
 
     static install() {
@@ -115,14 +115,14 @@ export default class MultiSelect extends EventDispatcher {
 
         // additional controls
 
-        this.tranformControls = this.config.useTransformControls
+        this.transformControls = this.config.useTransformControls
             ? new TransformControls(camera, domElement)
             : null;
-        if (this.tranformControls) {
-            this.scene.add(this.tranformControls);
+        if (this.transformControls) {
+            this.scene.add(this.transformControls);
 
             // Manually transform each object
-            this.tranformControls.addEventListener('objectChange', (event) => {
+            this.transformControls.addEventListener('objectChange', (event) => {
                 const offset = event.target._offset as THREE.Vector3;
                 const positionStart = event.target._positionStart as THREE.Vector3;
                 for (let i = 0; i < this.selectedObjects.length; i++) {
@@ -131,7 +131,7 @@ export default class MultiSelect extends EventDispatcher {
                 }
             });
             if (this.config.controls) {
-                this.tranformControls.addEventListener('dragging-changed', (event) => {
+                this.transformControls.addEventListener('dragging-changed', (event) => {
                     this.config.controls!.enabled = !event.value;
                 });
             }
@@ -299,22 +299,22 @@ export default class MultiSelect extends EventDispatcher {
 
     private attachObjectToTransformControl() {
         if (this.config.useTransformControls === false) return;
-        if (this.tranformControls === null) return;
+        if (this.transformControls === null) return;
         if (this.selectedObjects.length === 0) return;
         // Detach and re-compute the center.
-        this.tranformControls.detach();
+        this.transformControls.detach();
         this.handleTransformControlsCenter();
-        this.tranformControls.attach(this.proxy);
+        this.transformControls.attach(this.proxy);
     }
 
     private detachObjectToTransformControl() {
         if (this.config.useTransformControls === false) return;
-        if (this.tranformControls === null) return;
+        if (this.transformControls === null) return;
         // Detach and re-compute the center, if necessary
-        this.tranformControls.detach();
+        this.transformControls.detach();
         if (this.selectedObjects.length === 0) return;
         this.handleTransformControlsCenter();
-        this.tranformControls.attach(this.proxy);
+        this.transformControls.attach(this.proxy);
     }
 
     handleTransformControlsCenter() {

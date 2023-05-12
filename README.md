@@ -2,6 +2,10 @@
 
 [![Release](https://github.com/andrewisen-tikab/three-multi-select/actions/workflows/release.yml/badge.svg)](https://github.com/andrewisen-tikab/three-multi-select/actions/workflows/release.yml)
 
+A control for three.js, similar to THREE.OrbitControl, that supports multi select and transforming multiple objects at once.
+
+![Example](./resources/example.gif)
+
 ## Instructions
 
 Here's some boilerplate to setup the `three-multi-select`.

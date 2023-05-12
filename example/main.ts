@@ -45,7 +45,8 @@ gridMaterial.transparent = true;
 gridHelper.position.y = -2.75;
 scene.add(gridHelper);
 
-camera.position.z = 5;
+// Arbitrary camera position
+camera.position.z = window.innerWidth > window.innerHeight ? 5 : 15;
 
 // First, we have the camera controls.
 // We will use the OrbitControls from three.js

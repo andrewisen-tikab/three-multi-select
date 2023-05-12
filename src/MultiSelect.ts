@@ -377,10 +377,13 @@ export default class MultiSelect extends EventDispatcher {
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const element = this.selectedObjects[i];
             if (element.uuid !== object.uuid) continue;
-            this.selectedObjects[i] = this.selectedObjects[i - 1];
+            // Swap the last element with the element to remove.
+            this.selectedObjects[i] = this.selectedObjects[this.selectedObjects.length - 1];
+            // Popping an array is faster than trying to splice it.
             this.selectedObjects.pop();
             break;
         }
+
         this.detachObjectToTransformControl();
         this.dispatchEvent({ type: 'deselect', object });
     }

@@ -430,7 +430,7 @@ export default class MultiSelect extends EventDispatcher {
     /**
      * Computes the center of all selected objects and offsets them accordingly.
      */
-    handleTransformControlsCenter() {
+    private handleTransformControlsCenter(): void {
         // Reset sum
         _sum.set(0, 0, 0);
 

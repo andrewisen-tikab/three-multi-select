@@ -10,8 +10,8 @@ A control for three.js, similar to THREE.OrbitControl, that supports multi selec
 
 Check the `examples` folder or visit one of the links below:
 
--   [https://andrewisen-tikab.github.io/three-multi-select/examples/simple](https://andrewisen-tikab.github.io/three-multi-select/simple)
--   [https://andrewisen-tikab.github.io/three-multi-select/examples/kitchen-sink](https://andrewisen-tikab.github.io/three-multi-select/kitchen-sink)
+-   [Simple](https://andrewisen-tikab.github.io/three-multi-select/examples/simple/)
+-   [Kitchen Sink](https://andrewisen-tikab.github.io/three-multi-select/examples/kitchen-sink/)
 
 ## Instructions
 

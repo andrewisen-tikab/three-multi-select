@@ -72,6 +72,7 @@ const multiSelect = new MultiSelect(
 const gui = new GUI();
 
 const state = {
+    enable: true,
     cube1: false,
     cube2: false,
     cube3: false,
@@ -84,6 +85,12 @@ const state = {
         multiSelect.deselectAllObjects();
     },
 } as const;
+
+gui.add(state, 'enable')
+    .name('Enable Multi Select')
+    .onChange((value) => {
+        multiSelect.enabled = value;
+    });
 
 const cubesFolder = gui.addFolder('Cubes');
 cubesFolder

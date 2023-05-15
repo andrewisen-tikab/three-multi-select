@@ -1135,6 +1135,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lil-gui@npm:^0.18.1":
+  version: 0.18.1
+  resolution: "lil-gui@npm:0.18.1"
+  checksum: b2e54eb23542d2620dce606603390697127da6c4ad3ed275bc47b3c6692d2b6a17c73e7d14389c1121cfe061d108d7f136e43f22bfad16a17a5caede8b7653fa
+  languageName: node
+  linkType: hard
+
 "lodash.get@npm:^4.4.2":
   version: 4.4.2
   resolution: "lodash.get@npm:4.4.2"
@@ -1792,6 +1799,7 @@ __metadata:
   resolution: "three-multi-select@workspace:."
   dependencies:
     "@types/three": ^0.149.0
+    lil-gui: ^0.18.1
     stats.js: ^0.17.0
     three: ^0.150.1
     three-mesh-bvh: ^0.5.23

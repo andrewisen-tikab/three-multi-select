@@ -36,8 +36,8 @@ cube2.position.setX(0);
 cube2.name = '2';
 const cube3 = new THREE.Mesh(geometry, material);
 group.add(cube3);
-cube2.position.setX(3);
-cube2.name = '3';
+cube3.position.setX(3);
+cube3.name = '3';
 
 const gridHelper = new THREE.GridHelper(10, 10, 0xffffff, 0xffffff);
 const gridMaterial = gridHelper.material as THREE.Material;

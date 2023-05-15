@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import GUI from 'lil-gui';
 import Stats from 'stats.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './style.css';
@@ -90,6 +91,24 @@ multiSelect.removeAllEventListeners;
 // With that, we can add our multi select to the scene.
 // We do this so that we can render the transform controls.
 scene.add(multiSelect.scene);
+
+// We can also add a GUI to change the configuration.
+const gui = new GUI();
+
+const state = {
+    selectAll: () => {
+        multiSelect.selectObject(cube1);
+        multiSelect.selectObject(cube2);
+        multiSelect.selectObject(cube3);
+    },
+    deselectAll: () => {
+        multiSelect.deselectAllObjects();
+    },
+} as const;
+
+const selection = gui.addFolder('Selection');
+selection.add(state, 'selectAll').name('Select All');
+selection.add(state, 'deselectAll').name('Deselect All');
 
 /**
  * This is boilerplate code to render the scene.

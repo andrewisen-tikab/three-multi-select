@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './style.css';
 
 // Use "import MultiSelect from 'three-multi-select';" in your own project
-import MultiSelect from '../src/MultiSelect';
+import MultiSelect from '../../src/MultiSelect';
 
 // This is boilerplate code to setup a scene
 type Mesh = THREE.Mesh<THREE.BufferGeometry, THREE.Material> & {
@@ -84,6 +84,8 @@ multiSelect.addEventListener<'deselect', Mesh>('deselect', (event) => {
     // Similar, when we deselect, we can restore the original material.
     object.material = object._material;
 });
+
+multiSelect.removeAllEventListeners;
 
 // With that, we can add our multi select to the scene.
 // We do this so that we can render the transform controls.

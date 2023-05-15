@@ -1,10 +1,17 @@
 # three-multi-select
 
-[![Release](https://github.com/andrewisen-tikab/three-multi-select/actions/workflows/release.yml/badge.svg)](https://github.com/andrewisen-tikab/three-multi-select/actions/workflows/release.yml)
-
 A control for three.js, similar to THREE.OrbitControl, that supports multi select and transforming multiple objects at once.
 
+[![Release](https://github.com/andrewisen-tikab/three-multi-select/actions/workflows/release.yml/badge.svg)](https://github.com/andrewisen-tikab/three-multi-select/actions/workflows/release.yml)
+
 ![Example](./resources/example.gif)
+
+## Demo
+
+Check the `examples` folder or visit one of the links below:
+
+-   [https://andrewisen-tikab.github.io/three-multi-select/examples/simple](https://andrewisen-tikab.github.io/three-multi-select/simple)
+-   [https://andrewisen-tikab.github.io/three-multi-select/examples/kitchen-sink](https://andrewisen-tikab.github.io/three-multi-select/kitchen-sink)
 
 ## Instructions
 
@@ -105,9 +112,3 @@ deselectObject
 ```
 deselectAllObjects
 ```
-
-## Demo
-
-See the `example/main.ts` file, or visit the link for a live demo.
-
-[https://andrewisen-tikab.github.io/three-multi-select/](https://andrewisen-tikab.github.io/three-multi-select/)

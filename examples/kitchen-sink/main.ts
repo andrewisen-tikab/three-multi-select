@@ -28,16 +28,17 @@ const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const selectMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 const cube1 = new THREE.Mesh(geometry, material);
 cube1.position.setX(-3);
-cube1.name = '1';
+cube1.name = 'cube1';
 group.add(cube1);
 const cube2 = new THREE.Mesh(geometry, material);
 group.add(cube2);
 cube2.position.setX(0);
-cube2.name = '2';
+cube2.name = 'cube2';
 const cube3 = new THREE.Mesh(geometry, material);
 group.add(cube3);
 cube3.position.setX(3);
-cube3.name = '3';
+cube3.name = 'cube3';
+const cubes = [cube1, cube2, cube3] as const;
 
 const gridHelper = new THREE.GridHelper(10, 10, 0xffffff, 0xffffff);
 const gridMaterial = gridHelper.material as THREE.Material;
@@ -67,6 +68,50 @@ const multiSelect = new MultiSelect(
     },
 );
 
+// We can also add a GUI to change the configuration.
+const gui = new GUI();
+
+const state = {
+    cube1: false,
+    cube2: false,
+    cube3: false,
+    selectAll: () => {
+        multiSelect.selectObject(cube1);
+        multiSelect.selectObject(cube2);
+        multiSelect.selectObject(cube3);
+    },
+    deselectAll: () => {
+        multiSelect.deselectAllObjects();
+    },
+} as const;
+
+const cubesFolder = gui.addFolder('Cubes');
+cubesFolder
+    .add(state, 'cube1')
+    .name(cube1.name)
+    .listen()
+    .onChange((value) => {
+        value ? multiSelect.selectObject(cube1) : multiSelect.deselectObject(cube1);
+    });
+cubesFolder
+    .add(state, 'cube2')
+    .name(cube2.name)
+    .listen()
+    .onChange((value) => {
+        value ? multiSelect.selectObject(cube2) : multiSelect.deselectObject(cube2);
+    });
+cubesFolder
+    .add(state, 'cube3')
+    .name(cube3.name)
+    .listen()
+    .onChange((value) => {
+        value ? multiSelect.selectObject(cube3) : multiSelect.deselectObject(cube3);
+    });
+
+const selectionFolder = gui.addFolder('Selection');
+selectionFolder.add(state, 'selectAll').name('Select All');
+selectionFolder.add(state, 'deselectAll').name('Deselect All');
+
 // The multi select will do nothing until we add event listeners.
 
 multiSelect.addEventListener<'select', Mesh>('select', (event) => {
@@ -78,37 +123,19 @@ multiSelect.addEventListener<'select', Mesh>('select', (event) => {
     object._material = object.material;
     // And then we change the material.
     object.material = selectMaterial;
+    state[object.name] = true;
 });
 
 multiSelect.addEventListener<'deselect', Mesh>('deselect', (event) => {
     const { object } = event;
     // Similar, when we deselect, we can restore the original material.
     object.material = object._material;
+    state[object.name] = false;
 });
-
-multiSelect.removeAllEventListeners;
 
 // With that, we can add our multi select to the scene.
 // We do this so that we can render the transform controls.
 scene.add(multiSelect.scene);
-
-// We can also add a GUI to change the configuration.
-const gui = new GUI();
-
-const state = {
-    selectAll: () => {
-        multiSelect.selectObject(cube1);
-        multiSelect.selectObject(cube2);
-        multiSelect.selectObject(cube3);
-    },
-    deselectAll: () => {
-        multiSelect.deselectAllObjects();
-    },
-} as const;
-
-const selection = gui.addFolder('Selection');
-selection.add(state, 'selectAll').name('Select All');
-selection.add(state, 'deselectAll').name('Deselect All');
 
 /**
  * This is boilerplate code to render the scene.

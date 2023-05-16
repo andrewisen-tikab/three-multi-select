@@ -59,35 +59,35 @@ export const ACTION = Object.freeze({
 export type Action = number;
 
 export type MouseButtons = {
-    left: mouseButtonAction;
-    middle: mouseButtonAction;
-    right: mouseButtonAction;
-    wheel: mouseWheelAction;
+    left: MouseButtonAction;
+    middle: MouseButtonAction;
+    right: MouseButtonAction;
+    wheel: MouseWheelAction;
 };
 
-export type mouseButtonAction =
+export type MouseButtonAction =
     | typeof ACTION.NONE
     | typeof ACTION.SELECT
     | typeof ACTION.MULTI_SELECT
     | typeof ACTION.DESELECT
     | typeof ACTION.TOGGLE;
 
-type mouseWheelAction = typeof ACTION.NONE;
+type MouseWheelAction = typeof ACTION.NONE;
 
 export type Touches = {
-    one: singleTouchAction;
-    two: multiTouchAction;
-    three: multiTouchAction;
+    one: SingleTouchAction;
+    two: MultiTouchAction;
+    three: MultiTouchAction;
 };
 
-export type singleTouchAction =
+export type SingleTouchAction =
     | typeof ACTION.NONE
     | typeof ACTION.SELECT
     | typeof ACTION.MULTI_SELECT
     | typeof ACTION.DESELECT
     | typeof ACTION.TOGGLE;
 
-export type multiTouchAction =
+export type MultiTouchAction =
     | typeof ACTION.NONE
     | typeof ACTION.SELECT
     | typeof ACTION.MULTI_SELECT

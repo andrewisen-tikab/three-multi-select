@@ -6,6 +6,7 @@ import './style.css';
 
 // Use "import MultiSelect from 'three-multi-select';" in your own project
 import MultiSelect from '../../src/MultiSelect';
+import { ACTION } from '../../src/types';
 
 // This is boilerplate code to setup a scene
 type Mesh = THREE.Mesh<THREE.BufferGeometry, THREE.Material> & {
@@ -71,8 +72,54 @@ const multiSelect = new MultiSelect(
 // We can also add a GUI to change the configuration.
 const gui = new GUI();
 
+enum HumanReadableMouseButtonAction {
+    None = 'None',
+    SELECT = 'Select',
+    DESELECT = 'Deselect',
+    TOGGLE = 'Toggle',
+}
+
+const convertHumanReadableMouseButtonActionToAction = (action: HumanReadableMouseButtonAction) => {
+    switch (action) {
+        case HumanReadableMouseButtonAction.SELECT:
+            return ACTION.SELECT;
+        case HumanReadableMouseButtonAction.DESELECT:
+            return ACTION.DESELECT;
+        case HumanReadableMouseButtonAction.TOGGLE:
+            return ACTION.TOGGLE;
+        default:
+            return ACTION.NONE;
+    }
+};
+
+enum HumanReadableTouchAction {
+    None = 'None',
+    SELECT = 'Select',
+    DESELECT = 'Deselect',
+    TOGGLE = 'Toggle',
+}
+
+const convertHumanReadableTouchActionToAction = (action: HumanReadableTouchAction) => {
+    switch (action) {
+        case HumanReadableTouchAction.SELECT:
+            return ACTION.SELECT;
+        case HumanReadableTouchAction.DESELECT:
+            return ACTION.DESELECT;
+        case HumanReadableTouchAction.TOGGLE:
+            return ACTION.TOGGLE;
+        default:
+            return ACTION.NONE;
+    }
+};
+
 const state = {
     enable: true,
+    mouseLeft: HumanReadableMouseButtonAction.SELECT,
+    mouseMiddle: HumanReadableMouseButtonAction.None,
+    mouseRight: HumanReadableMouseButtonAction.DESELECT,
+    touchOne: HumanReadableTouchAction.TOGGLE,
+    touchTwo: HumanReadableTouchAction.None,
+    touchThree: HumanReadableTouchAction.None,
     cube1: false,
     cube2: false,
     cube3: false,
@@ -90,6 +137,52 @@ gui.add(state, 'enable')
     .name('Enable Multi Select')
     .onChange((value) => {
         multiSelect.enabled = value;
+    });
+
+const mouseActionsFolder = gui.addFolder('Mouse  Actions');
+
+mouseActionsFolder
+    .add(state, 'mouseLeft', Object.values(HumanReadableMouseButtonAction))
+    .name('Left Mouse Button')
+    .onChange((value) => {
+        multiSelect.mouseButtons.left = convertHumanReadableMouseButtonActionToAction(value);
+    });
+
+mouseActionsFolder
+    .add(state, 'mouseMiddle', Object.values(HumanReadableMouseButtonAction))
+    .name('Middle Mouse Button')
+    .onChange((value) => {
+        multiSelect.mouseButtons.middle = convertHumanReadableMouseButtonActionToAction(value);
+    });
+
+mouseActionsFolder
+    .add(state, 'mouseRight', Object.values(HumanReadableMouseButtonAction))
+    .name('Right Mouse Button')
+    .onChange((value) => {
+        multiSelect.mouseButtons.right = convertHumanReadableMouseButtonActionToAction(value);
+    });
+
+const touchActionsFolder = gui.addFolder('Touch  Actions');
+
+touchActionsFolder
+    .add(state, 'touchOne', Object.values(HumanReadableMouseButtonAction))
+    .name('One Touch')
+    .onChange((value) => {
+        multiSelect.touches.one = convertHumanReadableTouchActionToAction(value);
+    });
+
+touchActionsFolder
+    .add(state, 'touchTwo', Object.values(HumanReadableMouseButtonAction))
+    .name('Two Touches')
+    .onChange((value) => {
+        multiSelect.touches.two = convertHumanReadableTouchActionToAction(value);
+    });
+
+touchActionsFolder
+    .add(state, 'touchThree', Object.values(HumanReadableMouseButtonAction))
+    .name('Three Touches')
+    .onChange((value) => {
+        multiSelect.touches.three = convertHumanReadableTouchActionToAction(value);
     });
 
 const cubesFolder = gui.addFolder('Cubes');

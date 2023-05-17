@@ -503,4 +503,12 @@ export default class MultiSelect extends EventDispatcher {
     public getRaycaster(): THREE.Raycaster {
         return _raycaster;
     }
+
+    /**
+     * Gets the transform controls instance.
+     * @returns The transform controls instance.
+     */
+    public getTransformControls(): TransformControls | null {
+        return this.transformControls;
+    }
 }

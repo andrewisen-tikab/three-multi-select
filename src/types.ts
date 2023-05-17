@@ -27,6 +27,14 @@ export type Config = {
      * Note that camera controls may interfere with this logic.
      */
     deselectOnRaycastMiss: boolean;
+    /**
+     * If true, update the selected objects local transformation matrices.
+     */
+    updateLocalMatrices: boolean;
+    /**
+     * If true, update the selected objects local transformation matrices.
+     */
+    updateWorldMatrices: boolean;
 };
 
 /**
@@ -38,6 +46,8 @@ export const DefaultConfig: Config = Object.freeze({
     transformControls: null,
     cameraControls: null,
     deselectOnRaycastMiss: false,
+    updateLocalMatrices: false,
+    updateWorldMatrices: false,
 });
 
 // see https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons#value

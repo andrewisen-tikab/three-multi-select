@@ -317,13 +317,6 @@ function animate(): void {
     stats.update();
     requestAnimationFrame(animate);
 
-    cube1.rotation.x += 0.01;
-    cube1.rotation.y += 0.01;
-    cube2.rotation.x += 0.01;
-    cube2.rotation.y += 0.01;
-    cube3.rotation.x += 0.01;
-    cube3.rotation.y += 0.01;
-
     controls.update();
 
     renderer.render(scene, camera);

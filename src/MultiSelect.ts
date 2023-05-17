@@ -16,19 +16,58 @@ import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-
 import { EventDispatcher, Listener } from './EventDispatcher';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
-type Object = THREE.Object3D;
-
 type Position = {
+    /**
+     * The object's initial position before transforming.
+     */
     _position?: THREE.Vector3;
 };
 
+/**
+ * This is the base class for most objects in three.js and provides a set of properties and methods for manipulating objects in 3D space.
+ */
+interface Object extends THREE.Object3D, Position {}
+
+/**
+ * User's pointer stored in screen space coordinates.
+ */
 const _pointer = /* @__PURE__ */ new THREE.Vector2();
+/**
+ * Array of intersections between the pointer and objects in the scene.
+ */
 let _intersects: THREE.Intersection<Object>[] = /* @__PURE__ */ [];
+/**
+ * This object is designed to assist with raycasting.
+ * Raycasting is used for mouse picking (working out what objects in the 3d space the mouse is over) amongst other things.
+ */
 const _raycaster = /* @__PURE__ */ new THREE.Raycaster();
 _raycaster.firstHitOnly = true;
-const _worldPosition = /* @__PURE__ */ new THREE.Vector3();
+
+/**
+ * Helper variable for calculating the new `position`.
+ */
+const _position = /* @__PURE__ */ new THREE.Vector3();
+/**
+ * Helper variable for calculating the new `rotation`.
+ */
+const _rotation = /* @__PURE__ */ new THREE.Euler();
+/**
+ * Helper variable for calculating the new `scale`.
+ */
+const _scale = /* @__PURE__ */ new THREE.Vector3();
+
+/**
+ * Helper variable for calculating the new `position`.
+ */
 const _sum = /* @__PURE__ */ new THREE.Vector3();
+/**
+ * Helper variable for calculating the new `position`.
+ */
 const _averagePoint = /* @__PURE__ */ new THREE.Vector3();
+/**
+ * A copy of the original Matrix4 of the selected objects.
+ */
+const _proxy = /* @__PURE__ */ new THREE.Object3D();
 
 // const average = (arr: number) => arr.reduce((p, c) => p + c, 0) / arr.length;
 /**
@@ -90,7 +129,7 @@ export default class MultiSelect extends EventDispatcher {
     /**
      * The objects that are currently selected.
      */
-    private selectedObjects: THREE.Object3D[];
+    private selectedObjects: Object[];
 
     private onContextMenuEvent: (this: HTMLElement, event: MouseEvent) => void;
     private onPointerDownEvent: (event: PointerEvent) => void;
@@ -174,11 +213,34 @@ export default class MultiSelect extends EventDispatcher {
 
             // Manually transform each object
             this.transformControls.addEventListener('objectChange', (event) => {
-                const offset = event.target._offset as THREE.Vector3;
-                const positionStart = event.target._positionStart as THREE.Vector3;
-                for (let i = 0; i < this.selectedObjects.length; i++) {
-                    const element = this.selectedObjects[i] as THREE.Object3D & Required<Position>;
-                    element.position.copy(offset).add(positionStart).add(element._position);
+                if (!this.transformControls) return;
+                switch (this.transformControls.getMode()) {
+                    case 'translate':
+                        _position.copy(this.proxy.position).sub(_proxy.position);
+                        for (let i = 0; i < this.selectedObjects.length; i++) {
+                            const element = this.selectedObjects[i] as THREE.Object3D &
+                                Required<Position>;
+
+                            element.position.copy(element._position).add(_position);
+                        }
+                        break;
+                    case 'rotate':
+                        _rotation.copy(this.proxy.rotation);
+                        for (let i = 0; i < this.selectedObjects.length; i++) {
+                            const element = this.selectedObjects[i] as THREE.Object3D &
+                                Required<Position>;
+                            element.rotation.copy(_rotation);
+                        }
+                    case 'scale':
+                        _scale.copy(this.proxy.scale);
+                        for (let i = 0; i < this.selectedObjects.length; i++) {
+                            const element = this.selectedObjects[i] as THREE.Object3D &
+                                Required<Position>;
+                            element.scale.copy(_scale);
+                        }
+
+                    default:
+                        break;
                 }
             });
             if (this.config.cameraControls) {
@@ -363,7 +425,13 @@ export default class MultiSelect extends EventDispatcher {
      * Selects an object and attaches it to the transform control.
      * @param object
      */
-    selectObject<T extends THREE.Object3D>(object: T): void {
+    selectObject<T extends Object>(object: T): void {
+        if (this.selectObject.length === 0) {
+            _proxy.position.copy(this.proxy.position);
+            _proxy.rotation.copy(this.proxy.rotation);
+            _proxy.scale.copy(this.proxy.scale);
+        }
+        object._position = object.position.clone();
         this.selectedObjects.push(object);
         this.attachObjectToTransformControl();
         this.dispatchEvent({ type: 'select', object });
@@ -373,10 +441,11 @@ export default class MultiSelect extends EventDispatcher {
      * De-selects an object and detaches it from the transform control.
      * @param object
      */
-    deselectObject<T extends THREE.Object3D>(object: T): void {
+    deselectObject<T extends Object>(object: T): void {
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const element = this.selectedObjects[i];
             if (element.uuid !== object.uuid) continue;
+            element._position = undefined;
             // Swap the last element with the element to remove.
             this.selectedObjects[i] = this.selectedObjects[this.selectedObjects.length - 1];
             // Popping an array is faster than trying to splice it.
@@ -437,10 +506,10 @@ export default class MultiSelect extends EventDispatcher {
         // Iterate all selected objects, find it's world position.
         for (let i = 0; i < this.selectedObjects.length; i++) {
             const object = this.selectedObjects[i];
-            object.getWorldPosition(_worldPosition);
+            object.getWorldPosition(_position);
 
             // Find the new average
-            _sum.add(_worldPosition);
+            _sum.add(_position);
         }
         // This is the center for the tranform controls.
         _averagePoint.copy(_sum.divideScalar(this.selectedObjects.length));

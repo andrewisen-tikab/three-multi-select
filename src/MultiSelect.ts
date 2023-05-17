@@ -212,7 +212,7 @@ export default class MultiSelect extends EventDispatcher {
             this.scene.add(this.transformControls);
 
             // Manually transform each object
-            this.transformControls.addEventListener('objectChange', (event) => {
+            this.transformControls.addEventListener('objectChange', (_event) => {
                 if (!this.transformControls) return;
                 switch (this.transformControls.getMode()) {
                     case 'translate':

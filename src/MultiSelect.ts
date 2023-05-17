@@ -215,32 +215,52 @@ export default class MultiSelect extends EventDispatcher {
             this.transformControls.addEventListener('objectChange', (_event) => {
                 if (!this.transformControls) return;
                 switch (this.transformControls.getMode()) {
+                    // Handle translation
                     case 'translate':
+                        // Get the difference between the proxy's current and original position
                         _position.copy(this.proxy.position).sub(_proxy.position);
                         for (let i = 0; i < this.selectedObjects.length; i++) {
                             const element = this.selectedObjects[i] as THREE.Object3D &
                                 Required<Position>;
-
+                            // Add the difference to the original position of the object
                             element.position.copy(element._position).add(_position);
                         }
                         break;
+                    // Handle rotation
                     case 'rotate':
+                        // For now, simply copy the rotation of the proxy
                         _rotation.copy(this.proxy.rotation);
                         for (let i = 0; i < this.selectedObjects.length; i++) {
                             const element = this.selectedObjects[i] as THREE.Object3D &
                                 Required<Position>;
+                            // I.e. all objects rotate around them self
                             element.rotation.copy(_rotation);
                         }
+                    // Handle scale
                     case 'scale':
+                        // Copy the scale of the proxy
                         _scale.copy(this.proxy.scale);
                         for (let i = 0; i < this.selectedObjects.length; i++) {
                             const element = this.selectedObjects[i] as THREE.Object3D &
                                 Required<Position>;
+                            // And apply it to all selected objects
                             element.scale.copy(_scale);
                         }
-
                     default:
                         break;
+                }
+                // Update the matrices of the objects, if necessary
+                if (this.config.updateLocalMatrices || this.config.updateWorldMatrices) {
+                    for (let i = 0; i < this.selectedObjects.length; i++) {
+                        const element = this.selectedObjects[i] as THREE.Object3D &
+                            Required<Position>;
+                        if (this.config.updateLocalMatrices) {
+                            element.updateMatrix();
+                        }
+                        if (this.config.updateWorldMatrices) {
+                            element.updateMatrixWorld();
+                        }
+                    }
                 }
             });
             if (this.config.cameraControls) {

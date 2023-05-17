@@ -131,6 +131,11 @@ const state = {
     deselectAll: () => {
         multiSelect.deselectAllObjects();
     },
+    transformControlsMode: 'translate',
+    transformControlsShowX: true,
+    transformControlsShowY: true,
+    transformControlsShowZ: true,
+    transformControlsSnap: false,
 } as const;
 
 gui.add(state, 'enable')
@@ -212,6 +217,74 @@ const selectionFolder = gui.addFolder('Selection');
 selectionFolder.add(state, 'selectAll').name('Select All');
 selectionFolder.add(state, 'deselectAll').name('Deselect All');
 
+const transformControlsFolder = gui.addFolder('Transform Controls');
+
+transformControlsFolder
+    .add(state, 'transformControlsMode', ['translate', 'rotate', 'scale'])
+    .name('Mode')
+    .onChange((value): void => {
+        const transformControls = multiSelect.getTransformControls();
+        if (!transformControls) return;
+        switch (value) {
+            case 'translate':
+                transformControls.setMode('translate');
+                break;
+            case 'rotate':
+                transformControls.setMode('rotate');
+                break;
+
+            case 'scale':
+                transformControls.setMode('scale');
+                break;
+            default:
+                break;
+        }
+    });
+
+transformControlsFolder
+    .add(state, 'transformControlsShowX')
+    .name('Show X')
+    .onChange((value): void => {
+        const transformControls = multiSelect.getTransformControls();
+        if (!transformControls) return;
+        transformControls.showX = value;
+    });
+
+transformControlsFolder
+    .add(state, 'transformControlsShowY')
+    .name('Show Y')
+    .onChange((value): void => {
+        const transformControls = multiSelect.getTransformControls();
+        if (!transformControls) return;
+        transformControls.showY = value;
+    });
+
+transformControlsFolder
+    .add(state, 'transformControlsShowZ')
+    .name('Show Z')
+    .onChange((value): void => {
+        const transformControls = multiSelect.getTransformControls();
+        if (!transformControls) return;
+        transformControls.showZ = value;
+    });
+
+transformControlsFolder
+    .add(state, 'transformControlsSnap')
+    .name('Snap to Grid')
+    .onChange((value): void => {
+        const transformControls = multiSelect.getTransformControls();
+        if (!transformControls) return;
+        if (value) {
+            transformControls.setTranslationSnap(1);
+            transformControls.setRotationSnap(THREE.MathUtils.degToRad(15));
+            transformControls.setScaleSnap(0.25);
+        } else {
+            transformControls.setTranslationSnap(null);
+            transformControls.setRotationSnap(null);
+            transformControls.setScaleSnap(null);
+        }
+    });
+
 // The multi select will do nothing until we add event listeners.
 
 multiSelect.addEventListener<'select', Mesh>('select', (event) => {
@@ -243,13 +316,6 @@ scene.add(multiSelect.scene);
 function animate(): void {
     stats.update();
     requestAnimationFrame(animate);
-
-    cube1.rotation.x += 0.01;
-    cube1.rotation.y += 0.01;
-    cube2.rotation.x += 0.01;
-    cube2.rotation.y += 0.01;
-    cube3.rotation.x += 0.01;
-    cube3.rotation.y += 0.01;
 
     controls.update();
 

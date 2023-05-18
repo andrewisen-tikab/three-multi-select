@@ -35,6 +35,11 @@ export type Config = {
      * If true, update the selected objects local transformation matrices.
      */
     updateWorldMatrices: boolean;
+    /**
+     * If true, the selected objects will rotate as a group around the center of the selection.
+     * If false, all objects are rotated individually around themself.
+     */
+    rotateAsGroup: boolean;
 };
 
 /**
@@ -48,6 +53,7 @@ export const DefaultConfig: Config = Object.freeze({
     deselectOnRaycastMiss: false,
     updateLocalMatrices: false,
     updateWorldMatrices: false,
+    rotateAsGroup: false,
 });
 
 // see https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons#value

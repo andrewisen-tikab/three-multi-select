@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import GUI from 'lil-gui';
-import Stats from 'stats.js';
+import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './style.css';
 
@@ -20,6 +20,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(new THREE.Color(0x263238), 1);
 document.body.appendChild(renderer.domElement);
+// @ts-ignore
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 

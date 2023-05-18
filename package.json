@@ -34,8 +34,5 @@
     "peerDependencies": {
         "three": "^0.150.1",
         "three-mesh-bvh": "^0.5.23"
-    },
-    "dependencies": {
-        "stats.js": "^0.17.0"
     }
 }

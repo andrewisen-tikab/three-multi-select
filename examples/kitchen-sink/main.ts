@@ -114,6 +114,7 @@ const convertHumanReadableTouchActionToAction = (action: HumanReadableTouchActio
 
 const state = {
     enable: true,
+    rotateAsGroup: false,
     mouseLeft: HumanReadableMouseButtonAction.SELECT,
     mouseMiddle: HumanReadableMouseButtonAction.None,
     mouseRight: HumanReadableMouseButtonAction.DESELECT,
@@ -142,6 +143,12 @@ gui.add(state, 'enable')
     .name('Enable Multi Select')
     .onChange((value) => {
         multiSelect.enabled = value;
+    });
+
+gui.add(state, 'rotateAsGroup')
+    .name('Rotate as Group')
+    .onChange((value) => {
+        multiSelect.updateConfig({ rotateAsGroup: value });
     });
 
 const mouseActionsFolder = gui.addFolder('Mouse  Actions');

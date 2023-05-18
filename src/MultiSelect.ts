@@ -52,6 +52,10 @@ const _position = /* @__PURE__ */ new THREE.Vector3();
  */
 const _rotation = /* @__PURE__ */ new THREE.Euler();
 /**
+ * Helper variable for calculating the new `rotation`.
+ */
+const _quaternion = /* @__PURE__ */ new THREE.Quaternion();
+/**
  * Helper variable for calculating the new `scale`.
  */
 const _scale = /* @__PURE__ */ new THREE.Vector3();
@@ -68,6 +72,10 @@ const _averagePoint = /* @__PURE__ */ new THREE.Vector3();
  * A copy of the original Matrix4 of the selected objects.
  */
 const _proxy = /* @__PURE__ */ new THREE.Object3D();
+const _translateToPivot = /* @__PURE__ */ new THREE.Matrix4();
+const _translateBack = /* @__PURE__ */ new THREE.Matrix4();
+const _rotationMatrix = /* @__PURE__ */ new THREE.Matrix4();
+const _finalMatrix = /* @__PURE__ */ new THREE.Matrix4();
 
 // const average = (arr: number) => arr.reduce((p, c) => p + c, 0) / arr.length;
 /**
@@ -228,13 +236,55 @@ export default class MultiSelect extends EventDispatcher {
                         break;
                     // Handle rotation
                     case 'rotate':
-                        // For now, simply copy the rotation of the proxy
-                        _rotation.copy(this.proxy.rotation);
-                        for (let i = 0; i < this.selectedObjects.length; i++) {
-                            const element = this.selectedObjects[i] as THREE.Object3D &
-                                Required<Position>;
-                            // I.e. all objects rotate around them self
-                            element.rotation.copy(_rotation);
+                        // If rotations is done as a group.
+                        // we need to calculate the pivot point and rotate each object around that point
+                        if (this.config.rotateAsGroup) {
+                            // We hijack the transform controls to get the rotation axis and angle
+                            const { rotationAxis, rotationAngle } = this.transformControls as any;
+                            if (rotationAxis == null) return;
+                            if (rotationAngle == null) return;
+                            _quaternion.setFromAxisAngle(rotationAxis, rotationAngle);
+
+                            // We define the new pivot point (for all objects)
+                            const pivotPoint = this.proxy.position;
+
+                            // We create the translation matrices
+                            _translateToPivot.makeTranslation(
+                                pivotPoint.x,
+                                pivotPoint.y,
+                                pivotPoint.z,
+                            );
+
+                            _translateBack.makeTranslation(
+                                -pivotPoint.x,
+                                -pivotPoint.y,
+                                -pivotPoint.z,
+                            );
+
+                            // We create the rotation matrix
+                            _rotationMatrix.makeRotationFromQuaternion(_quaternion);
+
+                            // And, finally we combine the matrices
+                            // This can probably be done with fewer steps, but it's easier to read this way.
+                            _finalMatrix
+                                .multiplyMatrices(_translateToPivot, _rotationMatrix)
+                                .multiply(_translateBack);
+
+                            for (let i = 0; i < this.selectedObjects.length; i++) {
+                                const element = this.selectedObjects[i] as THREE.Object3D &
+                                    Required<Position>;
+                                // Apply the transformation matrix to the object
+                                element.applyMatrix4(_finalMatrix);
+                            }
+                        } else {
+                            // Copy the rotation of the proxy
+                            _rotation.copy(this.proxy.rotation);
+                            for (let i = 0; i < this.selectedObjects.length; i++) {
+                                const element = this.selectedObjects[i] as THREE.Object3D &
+                                    Required<Position>;
+                                // I.e. all objects rotate around them self
+                                element.rotation.copy(_rotation);
+                            }
                         }
                     // Handle scale
                     case 'scale':
@@ -276,6 +326,14 @@ export default class MultiSelect extends EventDispatcher {
         this.onPointerUpEvent = this._onPointerUp.bind(this);
         this.onPointerMoveEvent = this._onPointerMove.bind(this);
         this.activate();
+    }
+
+    /**
+     * Updates the configuration of the controls.
+     * @param newConfig The new configuration.
+     */
+    public updateConfig(newConfig: Partial<Config>): void {
+        this.config = { ...this.config, ...newConfig };
     }
 
     /**

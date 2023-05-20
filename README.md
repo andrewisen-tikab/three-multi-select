@@ -53,7 +53,7 @@ const multiSelect = new MultiSelect(
 ```
 
 Objects are now selectable. But nothing will happen.
-We can listen to `selecrt` and `deselect` events like this:
+We can listen to `select` and `deselect` events like this:
 
 ```ts
 multiSelect.addEventListener<'select', Mesh>('select', (event) => {

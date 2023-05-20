@@ -13,6 +13,10 @@ Check the `examples` folder or visit one of the links below:
 -   [Simple](https://andrewisen-tikab.github.io/three-multi-select/examples/simple/)
 -   [Kitchen Sink](https://andrewisen-tikab.github.io/three-multi-select/examples/kitchen-sink/)
 
+## Docs
+
+Auto-generated docs can be found [here](https://andrewisen-tikab.github.io/three-multi-select/docs/classes/MultiSelect.html).
+
 ## Instructions
 
 Here's some boilerplate to setup the `three-multi-select`.

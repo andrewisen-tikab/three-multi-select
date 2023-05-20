@@ -80,6 +80,52 @@ const _finalMatrix = /* @__PURE__ */ new THREE.Matrix4();
 // const average = (arr: number) => arr.reduce((p, c) => p + c, 0) / arr.length;
 /**
  * A class for selecting objects in a scene.
+ * 
+ * @example
+ * Here's some boilerplate to setup the `three-multi-select`.
+ * ```ts
+ * import { MultiSelect } from 'three-multi-select';
+ * // Boilerplate code to setup a scene
+ * const scene = new THREE.Scene();
+ * // Everything that is selectable goes into this group.
+ * const group = new THREE.Group();
+ * scene.add(group);
+ * 
+ * // Boilerplate code to setup three
+ * const camera = new THREE.PerspectiveCamera();
+ * const renderer = new THREE.WebGLRenderer();
+ * 
+ * // We will use the OrbitControls from three.js
+ * const controls = new OrbitControls(camera, renderer.domElement);
+ * 
+ * // Everything is now ready for the multi select.
+ * const multiSelect = new MultiSelect(
+ *      // First we provide a camera
+ *      camera,
+ *      // Then we provide a `DOMElement` that we can use to attach JavasScript event listeners to.
+ *      renderer.domElement,
+ *      // Then, we provide an array of objects that are selectable. In this case, our group.
+ *      group.children,
+ *      // Finally, we provide a configuration object.
+ *      {
+ *      cameraControls: controls,
+ * },
+ * ```
+ * 
+ * @example
+ * Objects are now selectable. But nothing will happen.
+ * We can listen to `selecrt` and `deselect` events like this:
+ * 
+ * ```ts
+ * multiSelect.addEventListener<'select', Mesh>('select', (event) => {
+ *      const { object } = event;
+ * });
+ * 
+ * multiSelect.addEventListener<'deselect', Mesh>('deselect', (event) => {
+ *      const { object } = event;
+ * });
+ * ```
+);
  */
 export default class MultiSelect extends EventDispatcher {
     /**

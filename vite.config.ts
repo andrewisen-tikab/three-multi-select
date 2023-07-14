@@ -17,5 +17,9 @@ export default defineConfig({
             external: ['three', 'three-mesh-bvh'],
         },
     },
-    plugins: [dts()],
+    plugins: [
+        dts({
+            insertTypesEntry: true,
+        }),
+    ],
 });

@@ -32,7 +32,7 @@ jobs:
                   git commit -m "🤖 Update version" -a
             - name: Create Pull Request
               id: cpr
-              uses: peter-evans/create-pull-request@v5-beta
+              uses: peter-evans/create-pull-request@v5
               with:
                   token: ${{ secrets.PAT }}
                   title: Update version

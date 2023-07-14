@@ -4,10 +4,11 @@ import dts from 'vite-plugin-dts';
 
 export default defineConfig({
     build: {
+        sourcemap: true,
         lib: {
             // Could also be a dictionary or array of multiple entry points
             entry: resolve(__dirname, 'src/index.ts'),
-            name: 'three-multi-select',
+            name: 'ThreeMultiSelect',
             // the proper extensions will be added
             fileName: 'three-multi-select',
             formats: ['es'],
@@ -16,5 +17,9 @@ export default defineConfig({
             external: ['three', 'three-mesh-bvh'],
         },
     },
-    plugins: [dts()],
+    plugins: [
+        dts({
+            insertTypesEntry: true,
+        }),
+    ],
 });

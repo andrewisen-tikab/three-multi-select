@@ -10,6 +10,7 @@
     "main": "dist/three-multi-select.js",
     "types:": "dist/types.d.ts",
     "author": "André Wisén",
+    "license": "MIT",
     "keywords": [
         "three",
         "threejs"

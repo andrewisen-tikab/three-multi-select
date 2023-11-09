@@ -1,1 +1,3 @@
-export { default as ThreeMultiSelect } from './MultiSelect';
+export * from './MultiSelect';
+export * from './EventDispatcher';
+export * from './types';

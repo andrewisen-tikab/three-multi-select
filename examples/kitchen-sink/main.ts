@@ -4,8 +4,8 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './style.css';
 
-// Use "import MultiSelect from 'three-multi-select';" in your own project
-import MultiSelect from '../../src/MultiSelect';
+// Use "import { MultiSelect } from 'three-multi-select';" in your own project
+import { MultiSelect } from '../../src';
 import { ACTION } from '../../src/types';
 
 // This is boilerplate code to setup a scene

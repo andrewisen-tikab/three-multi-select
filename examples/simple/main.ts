@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './style.css';
 
-// Use "import MultiSelect from 'three-multi-select';" in your own project
-import MultiSelect from '../../src/MultiSelect';
+// Use "import { MultiSelect } from 'three-multi-select';" in your own project
+import { MultiSelect } from '../../src';
 
 // This is boilerplate code to setup a scene
 type Mesh = THREE.Mesh<THREE.BufferGeometry, THREE.Material> & {

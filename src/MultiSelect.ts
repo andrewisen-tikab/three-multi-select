@@ -127,7 +127,7 @@ const _finalMatrix = /* @__PURE__ */ new THREE.Matrix4();
  * ```
 );
  */
-export default class MultiSelect extends EventDispatcher {
+export class MultiSelect extends EventDispatcher {
     /**
      * The {@link Config} used by this instance.
      * Will respect the defaults set in {@link DefaultConfig}.

@@ -110,9 +110,81 @@ export type MultiTouchAction =
     | typeof ACTION.DESELECT
     | typeof ACTION.TOGGLE;
 
+/**
+ * Data for the `new-position` event.
+ */
+export type NewPositionEventData = {
+    /**
+     * Reference to the object that was moved.
+     */
+    object: THREE.Object3D;
+    /**
+     * A new vector object that holds the old position.
+     */
+    oldPosition: THREE.Vector3;
+    /**
+     * A new vector object that holds the new position.
+     * N.B: Old and new position can be the same!
+     */
+    newPosition: THREE.Vector3;
+};
+
+/**
+ * Data for the `new-rotation` event.
+ */
+export type NewScaleEventData = {
+    /**
+     * Reference to the object that was moved.
+     */
+    object: THREE.Object3D;
+    /**
+     * A new vector object that holds the old scale.
+     */
+    oldScale: THREE.Vector3;
+    /**
+     * A new vector object that holds the new scale.
+     * N.B: Old and new scale can be the same!
+     */
+    newScale: THREE.Vector3;
+};
+
+/**
+ * Data for the `new-rotation` event.
+ */
+export type NewRotationEventData = {
+    /**
+     * Reference to the object that was moved.
+     */
+    object: THREE.Object3D;
+    /**
+     * A new vector object that holds the old rotation.
+     */
+    oldRotation: THREE.Euler;
+    /**
+     * A new vector object that holds the new rotation.
+     * N.B: Old and new rotation can be the same!
+     */
+    newRotation: THREE.Euler;
+};
+
 export type MultiSelectEventMap = {
     select: { type: 'select'; object: THREE.Object3D };
     deselect: { type: 'deselect'; object: THREE.Object3D };
+    'new-position': {
+        type: 'new-position';
+        object: null;
+        newPositions: NewPositionEventData[];
+    };
+    'new-scale': {
+        type: 'new-scale';
+        object: null;
+        newScales: NewScaleEventData[];
+    };
+    'new-rotation': {
+        type: 'new-rotation';
+        object: null;
+        newRotations: NewRotationEventData[];
+    };
 };
 
 export interface PointerInput {

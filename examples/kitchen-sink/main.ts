@@ -318,6 +318,18 @@ multiSelect.addEventListener<'deselect', Mesh>('deselect', (event) => {
 // We do this so that we can render the transform controls.
 scene.add(multiSelect.scene);
 
+multiSelect.addEventListener<'new-position', Mesh>('new-position', (event) => {
+    console.log(event);
+});
+
+multiSelect.addEventListener<'new-rotation', Mesh>('new-rotation', (event) => {
+    console.log(event);
+});
+
+multiSelect.addEventListener<'new-scale', Mesh>('new-scale', (event) => {
+    console.log(event);
+});
+
 /**
  * This is boilerplate code to render the scene.
  */

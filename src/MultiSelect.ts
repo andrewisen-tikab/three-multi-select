@@ -10,7 +10,7 @@ import {
     PointerInput,
     Touches,
 } from './types';
-
+import type { NewPositionEventData, NewRotationEventData, NewScaleEventData } from './types';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 
 import { EventDispatcher, Listener } from './EventDispatcher';
@@ -76,6 +76,10 @@ const _translateToPivot = /* @__PURE__ */ new THREE.Matrix4();
 const _translateBack = /* @__PURE__ */ new THREE.Matrix4();
 const _rotationMatrix = /* @__PURE__ */ new THREE.Matrix4();
 const _finalMatrix = /* @__PURE__ */ new THREE.Matrix4();
+
+let _oldPositions: THREE.Vector3[] = /* @__PURE__ */ [];
+let _oldScales: THREE.Vector3[] = /* @__PURE__ */ [];
+let _oldRotations: THREE.Euler[] = /* @__PURE__ */ [];
 
 // const average = (arr: number) => arr.reduce((p, c) => p + c, 0) / arr.length;
 /**
@@ -362,6 +366,8 @@ export class MultiSelect extends EventDispatcher {
             if (this.config.cameraControls) {
                 this.transformControls.addEventListener('dragging-changed', (event) => {
                     this.config.cameraControls!.enabled = !event.value;
+
+                    this._onDraggingChanged(event.value);
                 });
             }
         }
@@ -372,6 +378,105 @@ export class MultiSelect extends EventDispatcher {
         this.onPointerUpEvent = this._onPointerUp.bind(this);
         this.onPointerMoveEvent = this._onPointerMove.bind(this);
         this.activate();
+    }
+
+    /**
+     * Handle transform state.
+     * On pointer down, we store the initial state of the selected objects.
+     * On pointer up, we calculate the new state of the selected objects and dispatch the appropriate events.
+     * @param storeInitialState Store the initial state of the selected objects if true.
+     */
+    private _onDraggingChanged(storeInitialState: boolean) {
+        if (storeInitialState) {
+            _oldPositions = [];
+            _oldScales = [];
+            _oldRotations = [];
+
+            this.selectedObjects.forEach((object) => {
+                switch (this.transformControls?.getMode()) {
+                    case 'translate':
+                        const oldPosition = object.position.clone();
+                        _oldPositions.push(oldPosition);
+                        break;
+                    case 'rotate':
+                        const oldRotation = object.rotation.clone();
+                        _oldRotations.push(oldRotation);
+                        break;
+                    case 'scale':
+                        const oldScale = object.scale.clone();
+                        _oldScales.push(oldScale);
+                        break;
+
+                    default:
+                        break;
+                }
+            });
+        } else {
+            const newPositions: NewPositionEventData[] = [];
+            const newRotations: NewRotationEventData[] = [];
+            const newScales: NewScaleEventData[] = [];
+
+            switch (this.transformControls?.getMode()) {
+                case 'translate':
+                    for (let i = 0; i < this.selectedObjects.length; i++) {
+                        const object = this.selectedObjects[i];
+
+                        const oldPosition = _oldPositions[i].clone();
+                        const newPosition = object.position.clone();
+
+                        newPositions.push({
+                            object,
+                            oldPosition,
+                            newPosition,
+                        });
+                    }
+                    this.dispatchEvent({
+                        type: 'new-position',
+                        newPositions,
+                    });
+                    break;
+                case 'rotate':
+                    for (let i = 0; i < this.selectedObjects.length; i++) {
+                        const object = this.selectedObjects[i];
+
+                        const oldRotation = _oldRotations[i].clone();
+                        const newRotation = object.rotation.clone();
+
+                        newRotations.push({
+                            object,
+                            oldRotation,
+                            newRotation,
+                        });
+                    }
+                    this.dispatchEvent({
+                        type: 'new-rotation',
+                        newRotations,
+                    });
+                    break;
+                case 'scale':
+                    for (let i = 0; i < this.selectedObjects.length; i++) {
+                        const object = this.selectedObjects[i];
+
+                        const oldScale = _oldScales[i].clone();
+                        const newScale = object.scale.clone();
+
+                        newScales.push({
+                            object,
+                            oldScale,
+                            newScale,
+                        });
+                    }
+
+                    this.dispatchEvent({
+                        type: 'new-scale',
+                        newScales,
+                    });
+                    break;
+
+                default:
+                    break;
+            }
+        }
     }
 
     /**

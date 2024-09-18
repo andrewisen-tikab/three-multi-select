@@ -1848,7 +1848,7 @@ __metadata:
     three-mesh-bvh: "npm:^0.5.23"
     typedoc: "npm:^0.24.7"
     typescript: "npm:^4.9.3"
-    vite: "npm:^4.5.3"
+    vite: "npm:^4.5.5"
     vite-plugin-dts: "npm:^2.1.0"
   peerDependencies:
     three: ^0.150.1
@@ -2020,9 +2020,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^4.5.3":
-  version: 4.5.3
-  resolution: "vite@npm:4.5.3"
+"vite@npm:^4.5.5":
+  version: 4.5.5
+  resolution: "vite@npm:4.5.5"
   dependencies:
     esbuild: "npm:^0.18.10"
     fsevents: "npm:~2.3.2"
@@ -2056,7 +2056,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 8/fd3f512ce48ca2a1fe60ad0376283b832de9272725fdbc65064ae9248f792de87b0f27a89573115e23e26784800daca329f8a9234d298ba6f60e808a9c63883c
+  checksum: 10/2e8b39e004f2b2e72506b816700b3aafaf3f85bdcb9dd9392075bb234ce7333f859a0d2078a85ce5d0039f0f659ca564a7366af587848e5166f14b136cb0ad37
   languageName: node
   linkType: hard
 

@@ -6,9 +6,9 @@
     },
     "version": "0.0.25",
     "type": "module",
-    "module": "src/index.ts",
+    "module": "dist/three-multi-select.js",
     "main": "dist/three-multi-select.js",
-    "types:": "dist/types.d.ts",
+    "types": "dist/types.d.ts",
     "author": "André Wisén",
     "license": "MIT",
     "keywords": [
